@@ -1,54 +1,36 @@
 package com.boardhub.chess.layoutsLogic;
 
-import android.graphics.Color;
+import static com.boardhub.chess.dataClasses.ChessUI.*;
+
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.Toast;
+import android.widget.TextView;
 
+import androidx.fragment.app.Fragment;
 import com.boardhub.R;
-import com.boardhub.chess.dataClasses.ChessGame;
-import com.boardhub.chess.dataClasses.ChessPlayer;
+import com.boardhub.chess.dataClasses.*;
 import com.boardhub.chess.pieces.ChessPiece;
-
-import java.util.HashMap;
-import java.util.Set;
+import java.util.ArrayList;
 
 public class ChessGameFragment extends Fragment {
-    private final int LIGHT_SQUARE = Color.parseColor("#eeeed2");
-    private final int DARK_SQUARE = Color.parseColor("#769656");
-    // The yellow highlight for the piece you just picked up
-    private final int HIGHLIGHT_SELECTED = Color.parseColor("#F5F682");
-
-    // Cyan highlights for the potential destination squares
-    private final int HIGHLIGHT_CYAN_LIGHT = Color.parseColor("#11B5E4"); // Brighter for light squares
-    private final int HIGHLIGHT_CYAN_DARK = Color.parseColor("#0E94BA");  // Deeper for dark squares
-
-
+    private TextView playerCapturedPiecesTextView,
+            opponentCapturedPiecesTextView;
     private ChessPiece selectedPiece = null;
-    private HashMap<int[], ChessPiece[]> activeMoves = new HashMap<>();
-
+    private ArrayList<ChessMove> activeMoves = new ArrayList<>();
     private ImageButton[][] boardSquares = new ImageButton[8][8];
     private GridLayout chessGrid;
-
-    private static final String ARG_PLAYER = "player";
     private ChessPlayer player;
     private ChessGame game;
-
-    public ChessGameFragment() {
-    }
 
     public static ChessGameFragment newInstance(ChessPlayer player) {
         ChessGameFragment fragment = new ChessGameFragment();
         Bundle args = new Bundle();
-        args.putSerializable(ARG_PLAYER, player);
+        args.putSerializable("player", player);
         fragment.setArguments(args);
         return fragment;
     }
@@ -57,192 +39,163 @@ public class ChessGameFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            player = (ChessPlayer) getArguments().getSerializable(ARG_PLAYER);
-            game = player.GetBoard();
+            player = (ChessPlayer) getArguments().getSerializable("player");
+            game = player.GetGame();
         }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.chess_game_fragment, container, false);
-        setupBoard(root);
-        LoadBoardPosition();
+        InitializeViews(root);
+        InitializeBoard(root);
+        UpdateBoardUI();
         return root;
     }
-
-    private void setupBoard(View rootView) {
+    private void InitializeViews(View rootView){
         chessGrid = rootView.findViewById(R.id.chess_grid);
+        playerCapturedPiecesTextView = rootView.findViewById(R.id.playerCapturedPiecesTextView);
+        opponentCapturedPiecesTextView = rootView.findViewById(R.id.opponentCapturedPiecesTextView);
+    }
 
-        // Clear any existing views if this is called multiple times
+    private void InitializeBoard(View rootView) {
         chessGrid.removeAllViews();
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 ImageButton square = new ImageButton(getContext());
-
-                // 1. CRITICAL: Remove default Android button styling (shadows/internal padding)
                 square.setBackground(null);
                 square.setPadding(0, 0, 0, 0);
                 square.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
-                // 2. Use GridLayout Weights to fill the 1:1 Square perfectly
                 GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-
-                // width/height 0 tells the layout to use weights instead of fixed pixels
                 params.width = 0;
                 params.height = 0;
-
-                // rowSpec(index, weight) - weight 1f ensures equal distribution
                 params.rowSpec = GridLayout.spec(row, 1f);
                 params.columnSpec = GridLayout.spec(col, 1f);
-
-                // Ensure no accidental margins
-                params.setMargins(0, 0, 0, 0);
                 square.setLayoutParams(params);
 
-                // 3. Coloring Logic
-                if ((row + col) % 2 == 0) {
-                    square.setBackgroundColor(LIGHT_SQUARE);
-                } else {
-                    square.setBackgroundColor(DARK_SQUARE);
-                }
+                // Logical mapping: Visual Row 0 is Logic Y 7
+                final int logicX = col;
+                final int logicY = 7 - row;
 
-                // 4. Tagging and Click Listeners
-                final int xPos = col;
-                final int yPos = row;
-                square.setTag(new int[]{row, col});
-                square.setOnClickListener(v -> onSquareClicked(xPos, yPos));
-
-                // 5. Add to UI and Reference Array
-                chessGrid.addView(square);
+                square.setOnClickListener(v -> OnSquareClicked(logicX, logicY));
                 boardSquares[row][col] = square;
+                chessGrid.addView(square);
             }
         }
     }
 
-    private void onSquareClicked(int x, int y){
+    private void OnSquareClicked(int x, int y) {
+        if (!player.GetIsWhite()){
+            x = 7-x;
+            y = 7-y;
+        }
         ChessPiece clickedPiece = game.GetPieceAt(x, y);
 
+        // 1. Attempting to move a selected piece
         if (selectedPiece != null) {
-            //if pressed on an empty square
-            if (clickedPiece == null) {
-                int[] key = findPosInMap(activeMoves.keySet(), x, y);
-                if (key != null){ //if its in the legal moves, execute the move
-                    ChessPiece[] pieces = activeMoves.get(key);
-                    ExecuteMove(x, y, pieces[0], pieces[1]);
-                } else {
-                    LoadBoardPosition();
-                }
-                selectedPiece = null;
-                activeMoves = null;
-            }
-
-            //if pressed an opponent piece
-            else if (clickedPiece.GetIsWhite() != game.GetIsWhiteTurn()) {
-                int[] key = findPosInMap(activeMoves.keySet(), x, y);
-                if (key != null){ //if its in the legal moves, execute the move
-                    ChessPiece[] pieces = activeMoves.get(key);
-                    ExecuteMove(x, y, pieces[0], pieces[1]);
-                } else {
-                    LoadBoardPosition();
-                }
-                selectedPiece = null;
-                activeMoves = null;
-            }
-
-            //if pressed on same square
-            else if (clickedPiece == selectedPiece) {
-                selectedPiece = null;
-                activeMoves = null;
-                LoadBoardPosition();
-            }
-
-            //if pressed on a player piece
-            else {
-                LoadBoardPosition();
-                selectedPiece = clickedPiece;
-                activeMoves = selectedPiece.GetValidSquares();
-
-                for (int[] coords : activeMoves.keySet()) {
-                    int targetX = coords[0];
-                    int targetY = coords[1];
-                    ImageButton square = boardSquares[targetY][targetX];
-
-                    // Apply two-tone logic: Check if the destination square is a light or dark square
-                    if ((targetX + targetY) % 2 == 0) {
-                        square.setBackgroundColor(HIGHLIGHT_CYAN_LIGHT);
-                    } else {
-                        square.setBackgroundColor(HIGHLIGHT_CYAN_DARK);
-                    }
-                }
+            ChessMove move = FindMoveInList(x, y);
+            if (move != null) {
+                ExecuteMove(move);
+                return;
             }
         }
-        else {
-            if (clickedPiece != null && clickedPiece.GetIsWhite() == game.GetIsWhiteTurn()) {
-                LoadBoardPosition();
-                selectedPiece = clickedPiece;
-                activeMoves = selectedPiece.GetValidSquares();
 
-                for (int[] coords : activeMoves.keySet()) {
-                    int targetX = coords[0];
-                    int targetY = coords[1];
-                    ImageButton square = boardSquares[targetY][targetX];
-
-                    // Apply two-tone logic: Check if the destination square is a light or dark square
-                    if ((targetX + targetY) % 2 == 0) {
-                        square.setBackgroundColor(HIGHLIGHT_CYAN_LIGHT);
-                    } else {
-                        square.setBackgroundColor(HIGHLIGHT_CYAN_DARK);
-                    }
-                }
+        // 2. Selecting a piece
+        if (clickedPiece != null && clickedPiece.GetIsWhite() == game.GetIsWhiteTurn()) {
+            if (selectedPiece == clickedPiece) {
+                DeselectPiece();
+            } else {
+                SelectPiece(clickedPiece);
             }
+        } else {
+            DeselectPiece();
         }
+        UpdateBoardUI();
     }
 
-    private int[] findPosInMap(Set<int[]> set, int x, int y) {
-        for (int[] pos : set) {
-            if (pos[0] == x && pos[1] == y) return pos;
-        }
-        return null;
+    private void SelectPiece(ChessPiece piece) {
+        selectedPiece = piece;
+        activeMoves = piece.GetMoves();
     }
 
-    private void ExecuteMove(int xPos, int yPos, ChessPiece movedPiece, ChessPiece capturedPiece){
-        if (capturedPiece != null) capturedPiece.RemoveFromGame();
-        movedPiece.MoveTo(xPos, yPos);
+    private void DeselectPiece() {
+        selectedPiece = null;
+        activeMoves.clear();
+    }
+
+    private void ExecuteMove(ChessMove move) {
+        move.movedPiece.Capture(move);
+
+        // Finalize turn
+        DeselectPiece();
+        UpdateCapturesUI();
+        SwitchTimers();
+        UpdateBoardUI();
         game.SetIsWhiteTurn(!game.GetIsWhiteTurn());
-        LoadBoardPosition();
-        Toast.makeText(requireContext(), "Successful Move!", Toast.LENGTH_SHORT).show();
     }
 
-    private void LoadBoardPosition(){
-        for (ChessPiece[] row : player.GetBoard().GetBoard()){
-            for (ChessPiece piece : row){
-                if (piece != null){
-                    int xPos = piece.GetXPos();
-                    int yPos = piece.GetYPos();
-                    ImageButton square = boardSquares[yPos][xPos];
-                    square.setImageResource(piece.GetImageResource());
-                }
-            }
-        }
+    private void UpdateBoardUI() {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                ImageButton square = boardSquares[row][col];
+                int logicY = 7 - row;
+                int logicX = col;
 
-                if ((row + col) % 2 == 0) {
-                    square.setBackgroundColor(LIGHT_SQUARE);
-                } else {
-                    square.setBackgroundColor(DARK_SQUARE);
+                if (!player.GetIsWhite()){
+                    logicX = 7-logicX;
+                    logicY = 7-logicY;
                 }
 
-                ChessPiece p = player.GetBoard().GetBoard()[row][col];
-                if (p != null) {
-                    square.setImageResource(p.GetImageResource());
+                ImageButton square = boardSquares[row][col];
+                ChessPiece piece = game.GetBoard()[logicY][logicX];
+
+                // Set Base Background Color
+                boolean isLight = (row + col) % 2 == 0;
+                square.setBackgroundColor(isLight ? lightNormal : darkNormal);
+
+                // Highlight Selected Piece
+                if (selectedPiece != null && selectedPiece.GetXPos() == logicX && selectedPiece.GetYPos() == logicY) {
+                    square.setBackgroundColor(isLight ? lightSelected : darkSelected);
+                }
+
+                // Highlight Available Moves
+                if (IsMoveTarget(logicX, logicY)) {
+                    square.setBackgroundColor(isLight ? lightHighlight : darkHighlight);
+                }
+
+                // Set Piece Icon
+                if (piece != null) {
+                    square.setImageResource(piece.GetImageResource());
                 } else {
                     square.setImageResource(0);
                 }
             }
         }
+    }
+
+    private ChessMove FindMoveInList(int x, int y) {
+        for (ChessMove move : activeMoves) {
+            if (move.targetX == x && move.targetY == y) return move;
+        }
+        return null;
+    }
+
+    private boolean IsMoveTarget(int x, int y) {
+        return FindMoveInList(x, y) != null;
+    }
+
+    private void SwitchTimers() {
+        // Implementation for starting/stopping CountdownTimers in ChessPlayer
+    }
+
+    private void UpdateCapturesUI() {
+        ChessPlayer opponent = player.GetIsWhite() ? game.GetBlackPlayer() : game.GetWhitePlayer();
+        String text1 = player.GetCapturesString();
+        String text2 = opponent.GetCapturesString();
+
+        playerCapturedPiecesTextView.setText("Captured: " + text1);
+        opponentCapturedPiecesTextView.setText("Captured: " + text2);
+        System.out.print(text1 + "\n" + text2);
     }
 }

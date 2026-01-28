@@ -1,8 +1,10 @@
 package com.boardhub.chess.pieces;
 
 import com.boardhub.chess.dataClasses.ChessLogic;
+import com.boardhub.chess.dataClasses.ChessMove;
 import com.boardhub.chess.dataClasses.ChessPlayer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Rook extends ChessPiece{
@@ -13,16 +15,19 @@ public class Rook extends ChessPiece{
         this.value = 5;
         this.imageResource = (isWhite) ? ChessLogic.Constants.whiteRookIcon : ChessLogic.Constants.blackRookIcon;
     }
+    public boolean HasMoved(){
+        return this.hasMoved;
+    }
 
-    public boolean GetHasMoved() {return this.hasMoved; }
     @Override
-    public HashMap<int[], ChessPiece[]> GetValidSquares() {
-        HashMap<int[], ChessPiece[]> moves = ChessLogic.FindMovesByBFS(this, ChessLogic.Constants.rookDirections);
-        return ChessLogic.FilterInvalidMoves(moves);
+    public void MoveTo(int xPos, int yPos, boolean isVirtual){
+        if (!isVirtual) {
+            this.hasMoved = true;
+        }
+        super.MoveTo(xPos, yPos, isVirtual);
     }
     @Override
-    public void MoveTo(int xPos, int yPos) {
-        super.MoveTo(xPos,yPos);
-        this.hasMoved = true;
+    public ArrayList<ChessMove> GetMoves() {
+        return ChessLogic.FindMovesByBFS(this, ChessLogic.Constants.rookDirections);
     }
 }

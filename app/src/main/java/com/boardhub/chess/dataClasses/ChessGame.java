@@ -9,6 +9,7 @@ import com.boardhub.chess.pieces.Queen;
 import com.boardhub.chess.pieces.Rook;
 
 import java.io.Serializable;
+import java.util.HashMap;
 
 public class ChessGame implements Serializable {
     final private ChessPiece[][] board = new ChessPiece[8][8];
@@ -25,33 +26,50 @@ public class ChessGame implements Serializable {
         else if (mode == 2) time = ChessLogic.Constants.classicModeDuration;
         else time = customTime;
 
-        this.whitePlayer = new ChessPlayer(this, true, time, null);
-        this.blackPlayer = new ChessPlayer(this, false, time, null);
+        HashMap<String, Integer> whiteCaptures = new HashMap<>();
+        HashMap<String, Integer> blackCaptures = new HashMap<>();
+
+        whiteCaptures.put("King", 0);
+        whiteCaptures.put("Queen", 0);
+        whiteCaptures.put("Rook", 0);
+        whiteCaptures.put("Bishop", 0);
+        whiteCaptures.put("Knight", 0);
+        whiteCaptures.put("Pawn", 0);
+
+        blackCaptures.put("King", 0);
+        blackCaptures.put("Queen", 0);
+        blackCaptures.put("Rook", 0);
+        blackCaptures.put("Bishop", 0);
+        blackCaptures.put("Knight", 0);
+        blackCaptures.put("Pawn", 0);
+
+        this.whitePlayer = new ChessPlayer(this, true, time, null, whiteCaptures);
+        this.blackPlayer = new ChessPlayer(this, false, time, null, blackCaptures);
 
         //White pieces
-        Rook whiteRook1 = new Rook(this.whitePlayer, 0, 7);
-        Knight whiteKnight1 = new Knight(this.whitePlayer, 1, 7);
-        Bishop whiteBishop1 = new Bishop(this.whitePlayer, 2, 7);
-        Queen whiteQueen = new Queen(this.whitePlayer, 3, 7);
-        King whiteKing = new King(this.whitePlayer, 4, 7);
-        Bishop whiteBishop2 = new Bishop(this.whitePlayer, 5, 7);
-        Knight whiteKnight2 = new Knight(this.whitePlayer, 6, 7);
-        Rook whiteRook2 = new Rook(this.whitePlayer, 7, 7);
+        Rook whiteRook1 = new Rook(this.whitePlayer, 0, 0);
+        Knight whiteKnight1 = new Knight(this.whitePlayer, 1, 0);
+        Bishop whiteBishop1 = new Bishop(this.whitePlayer, 2, 0);
+        Queen whiteQueen = new Queen(this.whitePlayer, 3, 0);
+        King whiteKing = new King(this.whitePlayer, 4, 0);
+        Bishop whiteBishop2 = new Bishop(this.whitePlayer, 5, 0);
+        Knight whiteKnight2 = new Knight(this.whitePlayer, 6, 0);
+        Rook whiteRook2 = new Rook(this.whitePlayer, 7, 0);
 
         for (int i = 0; i < 8; i++) {
-            Pawn whitePawn = new Pawn(this.whitePlayer, i, 6); // White pawns on row 6
-            Pawn blackPawn = new Pawn(this.blackPlayer, i, 1); // White pawns on row 6
+            Pawn whitePawn = new Pawn(this.whitePlayer, i, 1); // White pawns on row 6
+            Pawn blackPawn = new Pawn(this.blackPlayer, i, 6); // White pawns on row 6
         }
 
         //Black pieces
-        Rook blackRook1 = new Rook(this.blackPlayer, 0, 0);
-        Knight blackKnight1 = new Knight(this.blackPlayer, 1, 0);
-        Bishop blackBishop1 = new Bishop(this.blackPlayer, 2, 0);
-        Queen blackQueen = new Queen(this.blackPlayer, 3, 0);
-        King blackKing = new King(this.blackPlayer, 4, 0);
-        Bishop blackBishop2 = new Bishop(this.blackPlayer, 5, 0);
-        Knight blackKnight2 = new Knight(this.blackPlayer, 6, 0);
-        Rook blackRook2 = new Rook(this.blackPlayer, 7, 0);
+        Rook blackRook1 = new Rook(this.blackPlayer, 0, 7);
+        Knight blackKnight1 = new Knight(this.blackPlayer, 1, 7);
+        Bishop blackBishop1 = new Bishop(this.blackPlayer, 2, 7);
+        Queen blackQueen = new Queen(this.blackPlayer, 3, 7);
+        King blackKing = new King(this.blackPlayer, 4, 7);
+        Bishop blackBishop2 = new Bishop(this.blackPlayer, 5, 7);
+        Knight blackKnight2 = new Knight(this.blackPlayer, 6, 7);
+        Rook blackRook2 = new Rook(this.blackPlayer, 7, 7);
 
         //link the rooks to the kings;
         whiteKing.SetRookLeft(whiteRook1);

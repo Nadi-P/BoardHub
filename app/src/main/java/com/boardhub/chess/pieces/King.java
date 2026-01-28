@@ -1,15 +1,19 @@
 package com.boardhub.chess.pieces;
 
+import static com.boardhub.chess.dataClasses.ChessLogic.IsValidMove;
+
 import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
+import com.boardhub.chess.dataClasses.ChessMove;
 import com.boardhub.chess.dataClasses.ChessPlayer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class King extends ChessPiece{
     boolean isInCheck;
     boolean hasMoved;
-    Rook rookLeft, rookRight;
+    private Rook rookLeft, rookRight;
 
     public King(ChessPlayer player, int xPos, int yPos){
         super(player, xPos, yPos);
@@ -29,36 +33,27 @@ public class King extends ChessPiece{
     public void SetRookRight(Rook rook2) { this.rookRight = rook2; }
 
     @Override
-    public HashMap<int[], ChessPiece[]> GetValidSquares() {
-        HashMap<int[], ChessPiece[]> moves = ChessLogic.FindMovesByLocations(this, ChessLogic.Constants.kingDirections);
-        if (!isInCheck){
-            if (!rookLeft.GetHasMoved() && !this.hasMoved){
-                int row = (this.isWhite) ? 7 : 0;
-                ChessGame game = this.player.GetBoard();
-                if (game.GetPieceAt(1, row) == null && game.GetPieceAt(2, row) == null && game.GetPieceAt(3, row) == null){
-                    moves.put(new int[]{2, row}, new ChessPiece[]{this, null});
-                }
+    public ArrayList<ChessMove> GetMoves() {
+        int kingRow = this.isWhite ? 0 : 7;
+        ArrayList<ChessMove> moves =  ChessLogic.FindMovesByLocations(this, ChessLogic.Constants.kingDirections);
+        if (!hasMoved){
+            ChessPiece[][] board = this.player.GetGame().GetBoard();
+            if (!rookRight.HasMoved() &&
+                    board[kingRow][5] == null &&
+                    board[kingRow][6] == null){
+                ChessMove castleRight = new ChessMove(this, null, 6, kingRow);
+                castleRight.isRightCastling = true;
+                if (IsValidMove(castleRight)) moves.add(castleRight);
             }
-            if (!rookRight.GetHasMoved() && !this.hasMoved){
-                int row = (this.isWhite) ? 7 : 0;
-                ChessGame game = this.player.GetBoard();
-                if (game.GetPieceAt(6, row) == null && game.GetPieceAt(5, row) == null){
-                    moves.put(new int[]{6, row}, new ChessPiece[]{this, null});
-                }
+            if (!rookRight.HasMoved() &&
+                    board[kingRow][1] == null &&
+                    board[kingRow][2] == null &&
+                    board[kingRow][3] == null){
+                ChessMove castleLeft = new ChessMove(this, null, 2, kingRow);
+                castleLeft.isLeftCastling = true;
+                if (IsValidMove(castleLeft)) moves.add(castleLeft);
             }
         }
-        return ChessLogic.FilterInvalidMoves(moves);
-    }
-
-    @Override
-    public void MoveTo(int xPos, int yPos) {
-        // Castling logic only for REAL moves
-        if (this.xPos - xPos == 2) {
-            rookLeft.MoveTo(xPos + 1, yPos);
-        } else if (this.xPos - xPos == -2) {
-            rookRight.MoveTo(xPos - 1, yPos);
-        }
-        super.MoveTo(xPos, yPos);
-        this.hasMoved = true; // Permanent flag
+        return moves;
     }
 }

@@ -7,4 +7,21 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    private final int LIGHT_SQUARE = Color.parseColor("#eeeed2");
+    private final int DARK_SQUARE = Color.parseColor("#769656");
+    // The yellow highlight for the piece you just picked up
+    private final int HIGHLIGHT_SELECTED = Color.parseColor("#F5F682");
+
+    // Cyan highlights for the potential destination squares
+    private final int HIGHLIGHT_CYAN_LIGHT = Color.parseColor("#11B5E4"); // Brighter for light squares
+    private final int HIGHLIGHT_CYAN_DARK = Color.parseColor("#0E94BA");  // Deeper for dark squares
+
+    <color name="chess_square_light_normal">#eeeed2</color>
+    <color name="chess_square_dark_normal">#769656</color>
+    <color name="chess_square_light_highlight">#F5F682</color>
+    <color name="chess_square_dark_highlight">#d6d911</color>
+    <color name="chess_square_light_selected">#11B5E4</color>
+    <color name="chess_square_dark_selected">#0E94BA</color>
+
 </resources>

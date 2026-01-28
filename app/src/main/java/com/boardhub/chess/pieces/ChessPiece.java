@@ -1,13 +1,16 @@
 package com.boardhub.chess.pieces;
 
 import com.boardhub.chess.dataClasses.ChessGame;
+import com.boardhub.chess.dataClasses.ChessLogic;
+import com.boardhub.chess.dataClasses.ChessMove;
 import com.boardhub.chess.dataClasses.ChessPlayer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ChessPiece {
     protected ChessPlayer player;
-    protected ChessGame board;
+    protected ChessPiece[][] board;
     protected boolean isWhite;
     protected int xPos;
     protected int yPos;
@@ -23,9 +26,10 @@ public class ChessPiece {
         this.xPos = startX;
         this.yPos = startY;
 
+        this.board = this.player.GetGame().GetBoard();
+        this.board[startY][startX] = this;
         this.player.GetPieces().add(this);
-        this.board = this.player.GetBoard();
-        this.MoveTo(this.xPos, this.yPos);
+
     }
 
     public ChessPlayer GetPlayer() {
@@ -46,7 +50,7 @@ public class ChessPiece {
     public int GetImageResource() {
         return imageResource;
     }
-    public ChessGame GetBoard() { return board; }
+    public ChessPiece[][] GetBoard() { return board; }
 
     public void SetPlayer(ChessPlayer player) {
         this.player = player;
@@ -73,29 +77,7 @@ public class ChessPiece {
 
     public void RemoveFromGame(){
         this.player.GetPieces().remove(this);
-        this.board.GetBoard()[this.yPos][this.xPos] = null;
-    }
-
-    public void AddToGame(){
-        this.player.GetPieces().add(this);
-        this.board.GetBoard()[this.yPos][this.xPos] = this;
-    }
-
-    public void MoveTo(int xPos, int yPos) {
-        // Only call the internal logic, do not call PseudoMoveTo here
-        executeInternalMove(xPos, yPos);
-    }
-
-    public void PseudoMoveTo(int xPos, int yPos) {
-        executeInternalMove(xPos, yPos);
-    }
-
-    // Create a private helper to actually move the data
-    private void executeInternalMove(int xPos, int yPos) {
-        this.board.GetBoard()[this.yPos][this.xPos] = null;
-        this.xPos = xPos;
-        this.yPos = yPos;
-        this.board.GetBoard()[this.yPos][this.xPos] = this;
+        this.board[this.yPos][this.xPos] = null;
     }
 
     public boolean isDifferentColor(ChessPiece piece){
@@ -103,7 +85,53 @@ public class ChessPiece {
         return this.isWhite != piece.isWhite;
     }
 
-    public HashMap<int[], ChessPiece[]> GetValidSquares(){
+    public void MoveTo(int xPos, int yPos, boolean isVirtual) {
+        if (!ChessLogic.IsPositionInBoard(xPos, yPos)) return;
+        this.player.GetGame().GetBoard()[this.yPos][this.xPos] = null;
+        this.xPos = xPos;
+        this.yPos = yPos;
+        this.player.GetGame().GetBoard()[yPos][xPos] = this;
+    }
+
+    public void Capture(ChessMove move){
+        ChessPiece captured = move.capturedPiece;
+        int x = move.targetX;
+        int y = move.targetY;
+
+        // 1. Handle En Passant
+        if (move.isEnPassant && captured != null) {
+            captured.RemoveFromGame(); // This clears the square next to the target
+        }
+
+        // 2. Handle Castling
+        if (move.isRightCastling || move.isLeftCastling) {
+            int rookX = move.isRightCastling ? 7 : 0;
+            int rookTargetX = move.isRightCastling ? 5 : 3;
+            ChessPiece rook = this.board[this.yPos][rookX];
+
+            MoveTo(x, y, false); // Move King
+            if (rook != null) rook.MoveTo(rookTargetX, y, false); // Move Rook
+            return;
+        }
+
+        // 3. Standard Move/Capture
+        if (captured != null) {
+            this.player.AddCapture(captured);
+            captured.RemoveFromGame();
+        }
+        MoveTo(x, y, false);
+
+    }
+
+    public ArrayList<ChessMove> GetMoves(){
         return null;
     };
+
+    @Override
+    public String toString() {
+        String color = isWhite ? "White " : "Black ";
+        String type = this.getClass().getSimpleName();
+        String pos = "(" + xPos + ", " + yPos + ")";
+        return color + " " +  type + " " + pos;
+    }
 }

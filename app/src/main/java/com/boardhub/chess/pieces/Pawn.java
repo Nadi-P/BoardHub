@@ -1,8 +1,14 @@
 package com.boardhub.chess.pieces;
 
+import static com.boardhub.chess.dataClasses.ChessLogic.IsPositionInBoard;
+import static com.boardhub.chess.dataClasses.ChessLogic.IsValidMove;
+
+import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
+import com.boardhub.chess.dataClasses.ChessMove;
 import com.boardhub.chess.dataClasses.ChessPlayer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Pawn extends ChessPiece{
@@ -15,78 +21,67 @@ public class Pawn extends ChessPiece{
         this.imageResource = (isWhite) ? ChessLogic.Constants.whitePawnIcon : ChessLogic.Constants.blackPawnIcon;
     }
 
-    // --- Get Methods ---
-    public boolean GetIsValidEnPassant(){
-        return this.isValidEnPassant;
-    }
-    public boolean GetHasMoved(){
-        return this.hasMoved;
-    }
-
-    // --- Set Methods ---
-    public void SetIsValidEnPassant(boolean isValidEnPassant){
-        this.isValidEnPassant = isValidEnPassant;
-    }
-    public void SetHasMoved(boolean hasMoved){
-        this.hasMoved = hasMoved;
-    }
-
-    // --- Logic Methods ---
     @Override
-    public HashMap<int[], ChessPiece[]> GetValidSquares(){
-        HashMap<int[], ChessPiece[]> validSquares = new HashMap<int[], ChessPiece[]>();
-        int x = this.xPos;
-        int y = this.yPos;
-        ChessPiece[][] board = this.player.GetBoard().GetBoard();
+    public void MoveTo(int xPos, int yPos, boolean isVirtual){
+        if (!isVirtual){
+            isValidEnPassant = !this.hasMoved && Math.abs(yPos - this.yPos) == 2;
+            this.hasMoved = true;
+        }
+        super.MoveTo(xPos, yPos, isVirtual);
+    }
 
-        // Determine direction: White moves -1 (up), Black moves +1 (down)
-        int dir = this.isWhite ? -1 : 1;
+    @Override
+    public ArrayList<ChessMove> GetMoves() {
+        ArrayList<ChessMove> possibleMoves = new ArrayList<>();
+        ChessGame game = this.player.GetGame();
+        int pawnDir = this.isWhite ? 1 : -1;
 
-        // --- 1. FORWARD MOVES ---
-        int forwardY = y + dir;
-        if (forwardY >= 0 && forwardY < 8 && board[forwardY][x] == null) {
-            validSquares.put(new int[]{x, forwardY}, new ChessPiece[]{this, null});
+        // 1. Forward Movement (Cannot capture)
+        int nextX = this.xPos;
+        int nextY = this.yPos + pawnDir;
 
-            // Double move: check if on starting rank (6 for white, 1 for black)
-            int startingRank = this.isWhite ? 6 : 1;
-            int doubleForwardY = y + (2 * dir);
-            if (y == startingRank && board[doubleForwardY][x] == null) {
-                validSquares.put(new int[]{x, doubleForwardY}, new ChessPiece[]{this, null});
+        if (IsPositionInBoard(nextX, nextY) && game.GetPieceAt(nextX, nextY) == null) {
+            ChessMove move1 = new ChessMove(this, null, nextX, nextY);
+            if (IsValidMove(move1)) possibleMoves.add(move1);
+
+            // Double move from starting rank
+            int doubleY = this.yPos + (2 * pawnDir);
+            if (!this.hasMoved && IsPositionInBoard(nextX, doubleY) && game.GetPieceAt(nextX, doubleY) == null) {
+                ChessMove move2 = new ChessMove(this, null, nextX, doubleY);
+                if (IsValidMove(move2)) possibleMoves.add(move2);
             }
         }
 
-        // --- 2. DIAGONAL CAPTURES ---
-        int[] sideOffsets = {-1, 1}; // Check left and right
-        for (int dx : sideOffsets) {
-            int targetX = x + dx;
-            int targetY = y + dir;
+        // 2. Diagonal Captures (Must capture)
+        int[][] captureOffsets = {{1, pawnDir}, {-1, pawnDir}};
+        for (int[] offset : captureOffsets) {
+            int capX = this.xPos + offset[0];
+            int capY = this.yPos + offset[1];
 
-            if (targetX >= 0 && targetX < 8 && targetY >= 0 && targetY < 8) {
-                ChessPiece target = board[targetY][targetX];
+            if (IsPositionInBoard(capX, capY)) {
+                ChessPiece target = game.GetPieceAt(capX, capY);
+
+                // Standard capture
                 if (target != null && this.isDifferentColor(target)) {
-                    validSquares.put(new int[]{targetX, targetY}, new ChessPiece[]{this, target});
+                    ChessMove move = new ChessMove(this, target, capX, capY);
+                    if (IsValidMove(move)) possibleMoves.add(move);
                 }
 
-                // --- 3. EN PASSANT ---
-                // Check the piece directly to the side of current position
-                ChessPiece sidePiece = board[y][targetX];
-                if (sidePiece instanceof Pawn && this.isDifferentColor(sidePiece)) {
-                    if (((Pawn) sidePiece).GetIsValidEnPassant()) {
-                        // Capture move goes to the empty square behind the enemy pawn
-                        validSquares.put(new int[]{targetX, targetY}, new ChessPiece[]{this, sidePiece});
+                // En Passant check
+                // Logic: Check if the square is empty, but there is an enemy pawn next to us
+                // that just moved two squares.
+                ChessPiece sidePiece = game.GetPieceAt(capX, this.yPos);
+                if (target == null && sidePiece instanceof Pawn && this.isDifferentColor(sidePiece)) {
+                    if (((Pawn) sidePiece).isValidEnPassant) {
+                        ChessMove epMove = new ChessMove(this, sidePiece, capX, capY);
+                        epMove.isEnPassant = true;
+                        if (IsValidMove(epMove)) possibleMoves.add(epMove);
                     }
                 }
             }
         }
 
-        return ChessLogic.FilterInvalidMoves(validSquares);
+        return possibleMoves;
     }
 
-    @Override
-    public void MoveTo(int xPos, int yPos) {
-        this.isValidEnPassant = !this.hasMoved && 2 == Math.abs(yPos - this.yPos);
-        super.MoveTo(xPos,yPos);
-        this.hasMoved = true;
-
-    }
 }
