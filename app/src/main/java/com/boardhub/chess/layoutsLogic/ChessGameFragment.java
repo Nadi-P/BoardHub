@@ -24,13 +24,14 @@ public class ChessGameFragment extends Fragment {
     private ArrayList<ChessMove> activeMoves = new ArrayList<>();
     private ImageButton[][] boardSquares = new ImageButton[8][8];
     private GridLayout chessGrid;
-    private ChessPlayer player;
+    private boolean isWhite;
     private ChessGame game;
 
-    public static ChessGameFragment newInstance(ChessPlayer player) {
+    public static ChessGameFragment newInstance(ChessGame game, boolean isWhite) {
         ChessGameFragment fragment = new ChessGameFragment();
         Bundle args = new Bundle();
-        args.putSerializable("player", player);
+        args.putSerializable("isWhite", isWhite);
+        args.putSerializable("game", game);
         fragment.setArguments(args);
         return fragment;
     }
@@ -39,8 +40,8 @@ public class ChessGameFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            player = (ChessPlayer) getArguments().getSerializable("player");
-            game = player.GetGame();
+            isWhite = (boolean) getArguments().getSerializable("isWhite");
+            game = (ChessGame) getArguments().getSerializable("game");
         }
     }
 
@@ -87,7 +88,7 @@ public class ChessGameFragment extends Fragment {
     }
 
     private void OnSquareClicked(int x, int y) {
-        if (!player.GetIsWhite()){
+        if (!isWhite){
             x = 7-x;
             y = 7-y;
         }
@@ -142,7 +143,7 @@ public class ChessGameFragment extends Fragment {
                 int logicY = 7 - row;
                 int logicX = col;
 
-                if (!player.GetIsWhite()){
+                if (!isWhite){
                     logicX = 7-logicX;
                     logicY = 7-logicY;
                 }
@@ -188,11 +189,9 @@ public class ChessGameFragment extends Fragment {
     private void SwitchTimers() {
         // Implementation for starting/stopping CountdownTimers in ChessPlayer
     }
-
     private void UpdateCapturesUI() {
-        ChessPlayer opponent = player.GetIsWhite() ? game.GetBlackPlayer() : game.GetWhitePlayer();
-        String text1 = player.GetCapturesString();
-        String text2 = opponent.GetCapturesString();
+        String text1 = game.GetCapturesString(isWhite);
+        String text2 = game.GetCapturesString(!isWhite);
 
         playerCapturedPiecesTextView.setText("Captured: " + text1);
         opponentCapturedPiecesTextView.setText("Captured: " + text2);

@@ -6,17 +6,16 @@ import static com.boardhub.chess.dataClasses.ChessLogic.IsValidMove;
 import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
 import com.boardhub.chess.dataClasses.ChessMove;
-import com.boardhub.chess.dataClasses.ChessPlayer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class Pawn extends ChessPiece{
     private boolean hasMoved;
     private boolean isValidEnPassant;
 
-    public Pawn(ChessPlayer player, int xPos, int yPos){
-        super(player, xPos, yPos);
+    public Pawn(ChessGame game, int xPos, int yPos, boolean isWhite){
+        super(game, xPos, yPos, isWhite);
+        this.FENid = (isWhite) ? ChessLogic.Constants.FENChars[5] : ChessLogic.Constants.FENChars[11];
         this.value = 1;
         this.imageResource = (isWhite) ? ChessLogic.Constants.whitePawnIcon : ChessLogic.Constants.blackPawnIcon;
     }
@@ -33,7 +32,7 @@ public class Pawn extends ChessPiece{
     @Override
     public ArrayList<ChessMove> GetMoves() {
         ArrayList<ChessMove> possibleMoves = new ArrayList<>();
-        ChessGame game = this.player.GetGame();
+        ChessGame game = this.GetGame();
         int pawnDir = this.isWhite ? 1 : -1;
 
         // 1. Forward Movement (Cannot capture)

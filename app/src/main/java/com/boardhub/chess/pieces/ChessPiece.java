@@ -3,14 +3,12 @@ package com.boardhub.chess.pieces;
 import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
 import com.boardhub.chess.dataClasses.ChessMove;
-import com.boardhub.chess.dataClasses.ChessPlayer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class ChessPiece {
-    protected ChessPlayer player;
-    protected ChessPiece[][] board;
+    protected String FENid;
+    protected ChessGame game;
     protected boolean isWhite;
     protected int xPos;
     protected int yPos;
@@ -20,21 +18,16 @@ public class ChessPiece {
 
     public ChessPiece(){}
 
-    public ChessPiece(ChessPlayer player, int startX, int startY){
-        this.player = player;
-        this.isWhite = player.GetIsWhite();
+    public ChessPiece(ChessGame game, int startX, int startY, boolean isWhite){
+        this.isWhite = isWhite;
         this.xPos = startX;
         this.yPos = startY;
 
-        this.board = this.player.GetGame().GetBoard();
-        this.board[startY][startX] = this;
-        this.player.GetPieces().add(this);
+        this.game = game;
+        this.game.GetBoard()[startY][startX] = this;
 
     }
 
-    public ChessPlayer GetPlayer() {
-        return player;
-    }
     public boolean GetIsWhite() {
         return isWhite;
     }
@@ -50,11 +43,9 @@ public class ChessPiece {
     public int GetImageResource() {
         return imageResource;
     }
-    public ChessPiece[][] GetBoard() { return board; }
+    public ChessGame GetGame() { return game; }
+    public String GetFENid() { return FENid; }
 
-    public void SetPlayer(ChessPlayer player) {
-        this.player = player;
-    }
     public void SetValue(int value) {
         this.value = value;
     }
@@ -76,8 +67,7 @@ public class ChessPiece {
     }
 
     public void RemoveFromGame(){
-        this.player.GetPieces().remove(this);
-        this.board[this.yPos][this.xPos] = null;
+        this.game.GetBoard()[this.yPos][this.xPos] = null;
     }
 
     public boolean isDifferentColor(ChessPiece piece){
@@ -87,13 +77,14 @@ public class ChessPiece {
 
     public void MoveTo(int xPos, int yPos, boolean isVirtual) {
         if (!ChessLogic.IsPositionInBoard(xPos, yPos)) return;
-        this.player.GetGame().GetBoard()[this.yPos][this.xPos] = null;
+        this.game.GetBoard()[this.yPos][this.xPos] = null;
         this.xPos = xPos;
         this.yPos = yPos;
-        this.player.GetGame().GetBoard()[yPos][xPos] = this;
+        this.game.GetBoard()[yPos][xPos] = this;
     }
 
     public void Capture(ChessMove move){
+        ChessPiece[][] board = this.game.GetBoard();
         ChessPiece captured = move.capturedPiece;
         int x = move.targetX;
         int y = move.targetY;
@@ -107,7 +98,7 @@ public class ChessPiece {
         if (move.isRightCastling || move.isLeftCastling) {
             int rookX = move.isRightCastling ? 7 : 0;
             int rookTargetX = move.isRightCastling ? 5 : 3;
-            ChessPiece rook = this.board[this.yPos][rookX];
+            ChessPiece rook = board[this.yPos][rookX];
 
             MoveTo(x, y, false); // Move King
             if (rook != null) rook.MoveTo(rookTargetX, y, false); // Move Rook

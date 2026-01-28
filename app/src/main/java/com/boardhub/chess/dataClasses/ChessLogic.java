@@ -65,6 +65,8 @@ public interface ChessLogic {
         );
         String[] pieceTypes = {"King", "Queen", "Rook", "Bishop", "Knight", "Pawn"};
 
+        String[] FENChars = {"R", "N", "B", "Q", "K", "P", "r", "n", "b", "q", "k", "p", "e"};
+
         int[][] rookDirections = new int[][]{
                 {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
         int[][] bishopDirections = new int[][]{
@@ -83,7 +85,7 @@ public interface ChessLogic {
     static ArrayList<ChessMove> FindMovesByBFS(
             ChessPiece piece, int[][] directions){
         ArrayList<ChessMove> possibleMoves = new ArrayList<ChessMove>();
-        ChessGame board = piece.GetPlayer().GetGame();
+        ChessGame board = piece.GetGame();
 
         for (int[] dir : directions) {
             int nextX = piece.GetXPos() + dir[0];
@@ -114,7 +116,7 @@ public interface ChessLogic {
             ChessPiece piece, int[][] directions){
         ArrayList<ChessMove> possibleMoves = new ArrayList<ChessMove>();
 
-        ChessGame board = piece.GetPlayer().GetGame();
+        ChessGame board = piece.GetGame();
 
         for (int[] dir : directions) {
             int nextX = piece.GetXPos() + dir[0];
@@ -142,7 +144,7 @@ public interface ChessLogic {
     static boolean IsValidMove(ChessMove move){
         ChessPiece movedPiece = move.movedPiece;
         ChessPiece capturedPiece = move.capturedPiece;
-        ChessGame game = movedPiece.GetPlayer().GetGame();
+        ChessGame game = movedPiece.GetGame();
 
         int targetX = move.targetX;
         int targetY = move.targetY;
@@ -176,7 +178,7 @@ public interface ChessLogic {
 
         // 2. Refresh the MockBoard AFTER the move is simulated
         MockPiece[][] duplicate = DuplicateBoard(game);
-        King king = isWhiteTurn ? game.GetWhitePlayer().GetKing() : game.GetBlackPlayer().GetKing();
+        King king = isWhiteTurn ? game.GetWhiteKing() : game.GetBlackKing();
         boolean inCheck = IsKingThreatened(king, duplicate);
 
 

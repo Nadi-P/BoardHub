@@ -13,8 +13,14 @@ import java.util.HashMap;
 
 public class ChessGame implements Serializable {
     final private ChessPiece[][] board = new ChessPiece[8][8];
-    private ChessPlayer whitePlayer;
-    private ChessPlayer blackPlayer;
+
+    private long whiteTime;
+    private long blackTime;
+    HashMap<String, Integer> whiteCaptures = new HashMap<>();
+    HashMap<String, Integer> blackCaptures = new HashMap<>();
+
+    King whiteKing;
+    King blackKing;
     private boolean isWhiteTurn;
 
     //new game of chess
@@ -25,9 +31,6 @@ public class ChessGame implements Serializable {
         else if (mode == 1) time = ChessLogic.Constants.blitzModeDuration;
         else if (mode == 2) time = ChessLogic.Constants.classicModeDuration;
         else time = customTime;
-
-        HashMap<String, Integer> whiteCaptures = new HashMap<>();
-        HashMap<String, Integer> blackCaptures = new HashMap<>();
 
         whiteCaptures.put("King", 0);
         whiteCaptures.put("Queen", 0);
@@ -43,33 +46,30 @@ public class ChessGame implements Serializable {
         blackCaptures.put("Knight", 0);
         blackCaptures.put("Pawn", 0);
 
-        this.whitePlayer = new ChessPlayer(this, true, time, null, whiteCaptures);
-        this.blackPlayer = new ChessPlayer(this, false, time, null, blackCaptures);
-
         //White pieces
-        Rook whiteRook1 = new Rook(this.whitePlayer, 0, 0);
-        Knight whiteKnight1 = new Knight(this.whitePlayer, 1, 0);
-        Bishop whiteBishop1 = new Bishop(this.whitePlayer, 2, 0);
-        Queen whiteQueen = new Queen(this.whitePlayer, 3, 0);
-        King whiteKing = new King(this.whitePlayer, 4, 0);
-        Bishop whiteBishop2 = new Bishop(this.whitePlayer, 5, 0);
-        Knight whiteKnight2 = new Knight(this.whitePlayer, 6, 0);
-        Rook whiteRook2 = new Rook(this.whitePlayer, 7, 0);
+        Rook whiteRook1 = new Rook(this, 0, 0, true);
+        Knight whiteKnight1 = new Knight(this, 1, 0, true);
+        Bishop whiteBishop1 = new Bishop(this, 2, 0, true);
+        Queen whiteQueen = new Queen(this, 3, 0, true);
+        King whiteKing = new King(this, 4, 0, true);
+        Bishop whiteBishop2 = new Bishop(this, 5, 0, true);
+        Knight whiteKnight2 = new Knight(this, 6, 0, true);
+        Rook whiteRook2 = new Rook(this, 7, 0, true);
 
         for (int i = 0; i < 8; i++) {
-            Pawn whitePawn = new Pawn(this.whitePlayer, i, 1); // White pawns on row 6
-            Pawn blackPawn = new Pawn(this.blackPlayer, i, 6); // White pawns on row 6
+            Pawn whitePawn = new Pawn(this, i, 1, true); // White pawns on row 6
+            Pawn blackPawn = new Pawn(this, i, 6, false); // White pawns on row 6
         }
 
         //Black pieces
-        Rook blackRook1 = new Rook(this.blackPlayer, 0, 7);
-        Knight blackKnight1 = new Knight(this.blackPlayer, 1, 7);
-        Bishop blackBishop1 = new Bishop(this.blackPlayer, 2, 7);
-        Queen blackQueen = new Queen(this.blackPlayer, 3, 7);
-        King blackKing = new King(this.blackPlayer, 4, 7);
-        Bishop blackBishop2 = new Bishop(this.blackPlayer, 5, 7);
-        Knight blackKnight2 = new Knight(this.blackPlayer, 6, 7);
-        Rook blackRook2 = new Rook(this.blackPlayer, 7, 7);
+        Rook blackRook1 = new Rook(this, 0, 7, false);
+        Knight blackKnight1 = new Knight(this, 1, 7, false);
+        Bishop blackBishop1 = new Bishop(this, 2, 7, false);
+        Queen blackQueen = new Queen(this, 3, 7, false);
+        King blackKing = new King(this, 4, 7, false);
+        Bishop blackBishop2 = new Bishop(this, 5, 7, false);
+        Knight blackKnight2 = new Knight(this, 6, 7, false);
+        Rook blackRook2 = new Rook(this, 7, 7, false);
 
         //link the rooks to the kings;
         whiteKing.SetRookLeft(whiteRook1);
@@ -86,61 +86,31 @@ public class ChessGame implements Serializable {
     public ChessPiece GetPieceAt(int x, int y) {
         return board[y][x];
     }
-    public ChessPlayer GetWhitePlayer() {
-        return whitePlayer;
-    }
-    public ChessPlayer GetBlackPlayer() {
-        return blackPlayer;
-    }
-    public boolean GetIsWhiteTurn() {return isWhiteTurn; }
-
-    public void SetWhitePlayer(ChessPlayer whitePlayer) {
-        this.whitePlayer = whitePlayer;
-    }
-    public void SetBlackPlayer(ChessPlayer blackPlayer) {
-        this.blackPlayer = blackPlayer;
-    }
+    public boolean IsWhiteTurn() {return isWhiteTurn; }
+    public King GetWhiteKing() { return this.whiteKing; }
+    public King GetBlackKing() { return this.blackKing; }
+    public long GetWhiteTime() { return whiteTime; }
+    public long GetBlackTime() { return blackTime; }
     public void SetIsWhiteTurn(boolean isWhiteTurn) { this.isWhiteTurn = isWhiteTurn; }
+    public String GetCapturesString(boolean forWhite) {
+        StringBuilder result = new StringBuilder();
 
-    public String getBoardAsString() {
-        StringBuilder sb = new StringBuilder();
-
-        // Chess coordinates usually show row 8 at the top, which is index 0 in your array
-        sb.append("   a b c d e f g h\n"); // Column labels
-        sb.append("  -----------------\n");
-
-        for (int y = 0; y < 8; y++) {
-            sb.append(8 - y).append("| "); // Row labels (8 to 1)
-
-            for (int x = 0; x < 8; x++) {
-                ChessPiece piece = board[y][x];
-
-                if (piece == null) {
-                    // Unicode for a small middle dot
-                    sb.append("*  ");
-                } else {
-                    // Get the character from constants based on piece type and color
-                    sb.append(getPieceChar(piece)).append(" ");
+        for (String type : ChessLogic.Constants.pieceTypes) {
+            String key = ((forWhite) ? "b" : "w") + type;
+            HashMap<String, Integer> captures = (forWhite) ? whiteCaptures : blackCaptures;
+            Integer count = captures.get(type); // Get count from your map
+            System.out.println("Count for " + key + ": " + count);
+            if (count != null && count > 0) {
+                char icon = ChessLogic.Constants.textIconsMap.get(key);
+                for (int i=0; i < count; i++){
+                    result.append(icon);
                 }
+                result.append(" ");
             }
-            sb.append("|").append(8 - y).append("\n");
         }
 
-        sb.append("  -----------------\n");
-        sb.append("   a b c d e f g h\n");
-
-        return sb.toString();
+        return result.toString().trim();
     }
-    private String getPieceChar(ChessPiece piece) {
-        boolean isWhite = piece.GetIsWhite();
 
-        if (piece instanceof Pawn)   return isWhite ? ChessLogic.Constants.whitePawnText.toString() : ChessLogic.Constants.blackPawnText.toString();
-        if (piece instanceof Rook)   return isWhite ? ChessLogic.Constants.whiteRookText.toString() : ChessLogic.Constants.blackRookText.toString();
-        if (piece instanceof Knight) return isWhite ? ChessLogic.Constants.whiteKnightText.toString() : ChessLogic.Constants.blackKnightText.toString();
-        if (piece instanceof Bishop) return isWhite ? ChessLogic.Constants.whiteBishopText.toString() : ChessLogic.Constants.blackBishopText.toString();
-        if (piece instanceof Queen)  return isWhite ? ChessLogic.Constants.whiteQueenText.toString() : ChessLogic.Constants.blackQueenText.toString();
-        if (piece instanceof King)   return isWhite ? ChessLogic.Constants.whiteKingText.toString() : ChessLogic.Constants.blackKingText.toString();
-
-        return "?";
-    }
+    public void RecordCapture() {}
 }

@@ -1,15 +1,15 @@
 package com.boardhub.chess.pieces;
 
+import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
 import com.boardhub.chess.dataClasses.ChessMove;
-import com.boardhub.chess.dataClasses.ChessPlayer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class Knight extends ChessPiece{
-    public Knight(ChessPlayer player, int xPos, int yPos) {
-        super(player, xPos, yPos);
+    public Knight(ChessGame game, int xPos, int yPos, boolean isWhite){
+        super(game, xPos, yPos, isWhite);
+        this.FENid = (isWhite) ? ChessLogic.Constants.FENChars[1] : ChessLogic.Constants.FENChars[7];
         this.value = 3;
         this.imageResource = (isWhite) ? ChessLogic.Constants.whiteKnightIcon : ChessLogic.Constants.blackKnightIcon;
     }

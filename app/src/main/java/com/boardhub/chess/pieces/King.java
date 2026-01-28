@@ -5,20 +5,18 @@ import static com.boardhub.chess.dataClasses.ChessLogic.IsValidMove;
 import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
 import com.boardhub.chess.dataClasses.ChessMove;
-import com.boardhub.chess.dataClasses.ChessPlayer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class King extends ChessPiece{
     boolean isInCheck;
     boolean hasMoved;
     private Rook rookLeft, rookRight;
 
-    public King(ChessPlayer player, int xPos, int yPos){
-        super(player, xPos, yPos);
+    public King(ChessGame game, int xPos, int yPos, boolean isWhite){
+        super(game, xPos, yPos, isWhite);
+        this.FENid = (isWhite) ? ChessLogic.Constants.FENChars[4] : ChessLogic.Constants.FENChars[10];
         this.value = 0;
-        player.SetKing(this);
         this.imageResource = (isWhite) ? ChessLogic.Constants.whiteKingIcon : ChessLogic.Constants.blackKingIcon;
 
     }
@@ -33,11 +31,18 @@ public class King extends ChessPiece{
     public void SetRookRight(Rook rook2) { this.rookRight = rook2; }
 
     @Override
+    public void MoveTo(int xPos, int yPos, boolean isVirtual){
+        if (!isVirtual){
+            this.hasMoved = true;
+        }
+        super.MoveTo(xPos, yPos, isVirtual);
+    }
+    @Override
     public ArrayList<ChessMove> GetMoves() {
         int kingRow = this.isWhite ? 0 : 7;
         ArrayList<ChessMove> moves =  ChessLogic.FindMovesByLocations(this, ChessLogic.Constants.kingDirections);
         if (!hasMoved){
-            ChessPiece[][] board = this.player.GetGame().GetBoard();
+            ChessPiece[][] board = this.game.GetBoard();
             if (!rookRight.HasMoved() &&
                     board[kingRow][5] == null &&
                     board[kingRow][6] == null){

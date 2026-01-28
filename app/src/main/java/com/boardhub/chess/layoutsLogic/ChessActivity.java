@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.boardhub.R;
 import com.boardhub.chess.dataClasses.ChessGame;
-import com.boardhub.chess.dataClasses.ChessPlayer;
 import com.boardhub.chess.dataClasses.ChessUI;
 
 public class ChessActivity extends AppCompatActivity {
@@ -15,9 +14,8 @@ public class ChessActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ChessUI.SetChessFragmentManager(getSupportFragmentManager(), getBaseContext());
-        ChessGame board = new ChessGame(2, 0);
-        ChessPlayer player = (false) ? board.GetWhitePlayer() : board.GetBlackPlayer();
-        ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(player));
+        ChessGame game = new ChessGame(2, 0);
+        ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game,true));
         setContentView(R.layout.chess_activity);
     }
 }
