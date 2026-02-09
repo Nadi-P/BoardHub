@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Rounded corners -->
+    <corners android:radius="8dp" />
+
+    <!-- Dark gray gradient -->
+    <gradient
+        android:angle="270"
+        android:startColor="@color/chess_button_gray_light"
+        android:endColor="@color/chess_button_gray_dark" />
+
+    <!-- Border -->
+    <stroke
+        android:width="0dp"
+        android:color="#1A1C1F" />
+
+</shape>

@@ -21,14 +21,26 @@ public class King extends ChessPiece{
 
     }
 
-    public boolean GetIsInCheck(){
+    public boolean IsInCheck(){
         return this.isInCheck;
     }
     public void SetIsInCheck(boolean isInCheck){
         this.isInCheck = isInCheck;
     }
-    public void SetRookLeft(Rook rook1) { this.rookLeft = rook1; }
-    public void SetRookRight(Rook rook2) { this.rookRight = rook2; }
+    public void SetRookLeft(Rook rook) {
+        this.rookLeft = rook;
+        if (rook != null){
+            rook.SetKing(this);
+            rook.SetIsLeftToKing(true);
+        }
+    }
+    public void SetRookRight(Rook rook) {
+        this.rookRight = rook;
+        if (rook != null){
+            rook.SetKing(this);
+            rook.SetIsRightToKing(true);
+        }
+    }
 
     @Override
     public void MoveTo(int xPos, int yPos, boolean isVirtual){
@@ -39,18 +51,18 @@ public class King extends ChessPiece{
     }
     @Override
     public ArrayList<ChessMove> GetMoves() {
-        int kingRow = this.isWhite ? 0 : 7;
+        int kingRow = this.yPos;
         ArrayList<ChessMove> moves =  ChessLogic.FindMovesByLocations(this, ChessLogic.Constants.kingDirections);
         if (!hasMoved){
             ChessPiece[][] board = this.game.GetBoard();
-            if (!rookRight.HasMoved() &&
+            if (rookRight != null && !rookRight.HasMoved() &&
                     board[kingRow][5] == null &&
                     board[kingRow][6] == null){
                 ChessMove castleRight = new ChessMove(this, null, 6, kingRow);
                 castleRight.isRightCastling = true;
                 if (IsValidMove(castleRight)) moves.add(castleRight);
             }
-            if (!rookRight.HasMoved() &&
+            if (rookLeft != null && !rookLeft.HasMoved() &&
                     board[kingRow][1] == null &&
                     board[kingRow][2] == null &&
                     board[kingRow][3] == null){

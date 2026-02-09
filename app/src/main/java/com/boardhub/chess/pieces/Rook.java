@@ -8,6 +8,9 @@ import java.util.ArrayList;
 
 public class Rook extends ChessPiece{
     private boolean hasMoved;
+    private King king;
+    private boolean isLeftToKing;
+    private boolean isRightToKing;
 
     public Rook(ChessGame game, int xPos, int yPos, boolean isWhite){
         super(game, xPos, yPos, isWhite);
@@ -17,6 +20,24 @@ public class Rook extends ChessPiece{
     }
     public boolean HasMoved(){
         return this.hasMoved;
+    }
+    public void SetKing(King king){
+        this.king = king;
+    }
+    public void SetIsLeftToKing(boolean isLeftToKing){
+        this.isLeftToKing = isLeftToKing;
+    }
+    public void SetIsRightToKing(boolean isRightToKing){
+        this.isRightToKing = isRightToKing;
+    }
+    public King GetKing(){
+        return this.king;
+    }
+    public boolean IsLeftToKing(){
+        return this.isLeftToKing;
+    }
+    public boolean IsRightToKing(){
+        return this.isRightToKing;
     }
 
     @Override

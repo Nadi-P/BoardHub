@@ -2,8 +2,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:abdroid="http://schemas.android.com/tools"
     android:orientation="vertical"
-    android:background="#262421"
+    android:background="@drawable/chess_background"
     android:gravity="center"
     android:padding="8dp">
 
@@ -17,7 +18,7 @@
         <ImageView
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="#403E3B"
+            android:background="@color/chess_timer_disabled_background"
             android:contentDescription="Opponent Avatar" />
 
         <LinearLayout
@@ -39,14 +40,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Captured:"
-                android:textColor="#999999"
+                android:textColor="@color/chess_subtext_color"
                 android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
+            android:id="@+id/opponentTimeView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="#403E3B"
+            android:background="@color/chess_timer_disabled_background"
             android:paddingVertical="8dp"
             android:paddingHorizontal="24dp"
             android:text="10:00"
@@ -55,23 +57,39 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <GridLayout
-            android:id="@+id/chess_grid"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:columnCount="8"
-            android:rowCount="8"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            <GridLayout
+                android:id="@+id/chess_grid"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:columnCount="8"
+                android:rowCount="8"
+                app:layout_constraintDimensionRatio="1:1"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+
+            <GridLayout
+                android:id="@+id/promotionsMenu_grid"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:columnCount="8"
+                android:rowCount="8"
+                app:layout_constraintDimensionRatio="1:1"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -83,7 +101,7 @@
         <ImageView
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="#403E3B"
+            android:background="@color/chess_timer_disabled_background"
             android:contentDescription="User Avatar" />
 
         <LinearLayout
@@ -105,11 +123,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Captured:"
-                android:textColor="#999999"
+                android:textColor="@color/chess_subtext_color"
                 android:textSize="12sp" />
         </LinearLayout>
 
         <TextView
+            android:id="@+id/playerTimeView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="#FFFFFF"

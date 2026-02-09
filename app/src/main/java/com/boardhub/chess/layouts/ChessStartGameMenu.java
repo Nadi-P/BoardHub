@@ -1,0 +1,176 @@
+package com.boardhub.chess.layouts;
+
+import android.os.Build;
+import android.os.Bundle;
+
+import androidx.fragment.app.Fragment;
+
+import android.view.LayoutInflater;
+import android.view.PointerIcon;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.TextView;
+
+import com.boardhub.R;
+import com.boardhub.chess.dataClasses.ChessDBI;
+import com.boardhub.chess.dataClasses.ChessGame;
+import com.boardhub.chess.dataClasses.ChessLogic;
+import com.boardhub.chess.dataClasses.ChessUI;
+
+public class ChessStartGameMenu extends Fragment {
+    public static final String IS_SINGLEPLAYER = "isSinglePlayer";
+    private boolean isSingleplayer;
+
+    private final android.os.Handler timerHandler = new android.os.Handler();
+    private Runnable timerRunnable;
+    private int intervalsMade;
+
+    private int currentModeIndex = 2;
+    private final String[] modes = {"\uD83E\uDDE8 Bullet (1m)", "⚡ Blitz (3m)", "⌛ Rapid (10m)", "⏱\uFE0F Classic (30m)"};
+    private final int[] durations = {1, 3, 10, 30}; // in minutes
+    private boolean isStartGameBtnClicked;
+
+    private String selectedColor = "RANDOM";
+
+    private Button btnSelectMode, btnStartGame;
+    private FrameLayout frameBlack, frameRandom, frameWhite;
+    private TextView tvQueueing;
+
+    public ChessStartGameMenu() {
+        // Required empty public constructor
+    }
+
+    public static ChessStartGameMenu newInstance(boolean isSingleplayer) {
+        ChessStartGameMenu fragment = new ChessStartGameMenu();
+        Bundle args = new Bundle();
+        args.putSerializable(IS_SINGLEPLAYER, isSingleplayer);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            isSingleplayer = (boolean) getArguments().getSerializable(IS_SINGLEPLAYER);
+        }
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View root = inflater.inflate(R.layout.chess_start_game_menu_fragment, container, false);
+
+        InitializeViews(root);
+        setupListeners(root);
+
+        return root;
+    }
+
+    private void InitializeViews(View root) {
+        // Initialize Views
+        btnSelectMode = root.findViewById(R.id.btn_select_mode); // Add this ID to your XML
+        btnStartGame = root.findViewById(R.id.btn_start_game);
+        frameBlack = root.findViewById(R.id.select_side_black); // Add IDs to outer FrameLayouts
+        frameRandom = root.findViewById(R.id.select_side_random);
+        frameWhite = root.findViewById(R.id.select_side_white);
+        tvQueueing = root.findViewById(R.id.queueing_tv);
+
+        btnSelectMode.setText(modes[currentModeIndex]);
+        tvQueueing.setVisibility(View.INVISIBLE);
+
+        timerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                intervalsMade += 1;
+                timerHandler.postDelayed(this, ChessUI.queueingAnimationInterval);
+                if (intervalsMade < 4){
+                    tvQueueing.setText(tvQueueing.getText() + ".");
+                }
+                else if (intervalsMade > 6) {
+                    intervalsMade = 0;
+                    tvQueueing.setText("Queueing");
+                }
+            }
+        };
+    }
+
+    private void setupListeners(View root) {
+        btnStartGame.setOnClickListener(v -> {
+            int timeInMillis = durations[currentModeIndex] * 60 * 1000;
+            if (isSingleplayer) {
+                ChessGame game = new ChessGame("UID", true, timeInMillis);
+                ChessGameFragment fragment = ChessGameFragment.newInstance(game, isSingleplayer);
+                ChessUI.ReplaceChessScreen(fragment);
+            }
+            else {
+                if (!isStartGameBtnClicked){
+                    isStartGameBtnClicked = true;
+                    startQueueing();
+                }
+                else {
+                    isStartGameBtnClicked = false;
+                    endQueueing();
+                }
+            }
+        });
+
+        btnSelectMode.setOnClickListener(v -> {
+            currentModeIndex = (currentModeIndex - 1 + modes.length) % modes.length;
+            btnSelectMode.setText(modes[currentModeIndex]);
+        });
+
+        setupColorSelectors();
+    }
+
+    private void setupColorSelectors() {
+        View.OnClickListener colorListener = v -> {
+            // Reset all backgrounds to null
+            frameBlack.setBackground(null);
+            frameRandom.setBackground(null);
+            frameWhite.setBackground(null);
+
+            // Set selected background and update state
+            v.setBackgroundResource(R.drawable.chess_green_button_background);
+
+            if (v == frameBlack) selectedColor = "BLACK";
+            else if (v == frameWhite) selectedColor = "WHITE";
+            else selectedColor = "RANDOM";
+        };
+
+        frameBlack.setOnClickListener(colorListener);
+        frameRandom.setOnClickListener(colorListener);
+        frameWhite.setOnClickListener(colorListener);
+
+        // Set default selection
+        frameRandom.performClick();
+    }
+
+    private void startQueueing(){
+        btnStartGame.setBackgroundResource(R.drawable.chess_orange_button_background);
+        btnStartGame.setText("Cancel");
+        tvQueueing.setText("Queueing");
+        tvQueueing.setVisibility(View.VISIBLE);
+
+        timerHandler.post(timerRunnable);
+
+        ChessDBI.AddPlayerToGameQueue(currentModeIndex, selectedColor, (gameUID, isWhite) -> {
+            endQueueing();
+            ChessGame game = new ChessGame(gameUID, isWhite, currentModeIndex);
+            ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game, false));
+        });
+    }
+
+    private void endQueueing(){
+        btnStartGame.setBackgroundResource(R.drawable.chess_green_button_background);
+        btnStartGame.setText("Start Game");
+        tvQueueing.setText("");
+        tvQueueing.setVisibility(View.INVISIBLE);
+
+        timerHandler.removeCallbacks(timerRunnable);
+        intervalsMade = 0;
+
+        ChessDBI.RemovePlayerFromGameQueue();
+    }
+}

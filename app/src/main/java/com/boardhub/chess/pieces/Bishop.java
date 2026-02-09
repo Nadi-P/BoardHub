@@ -1,5 +1,7 @@
 package com.boardhub.chess.pieces;
 
+import android.graphics.drawable.Drawable;
+
 import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
 import com.boardhub.chess.dataClasses.ChessMove;

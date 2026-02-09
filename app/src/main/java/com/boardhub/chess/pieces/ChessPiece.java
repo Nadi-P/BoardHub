@@ -67,6 +67,7 @@ public class ChessPiece {
     }
 
     public void RemoveFromGame(){
+        System.out.println(this.toString() + " removed from game.");
         this.game.GetBoard()[this.yPos][this.xPos] = null;
     }
 
@@ -81,37 +82,6 @@ public class ChessPiece {
         this.xPos = xPos;
         this.yPos = yPos;
         this.game.GetBoard()[yPos][xPos] = this;
-    }
-
-    public void Capture(ChessMove move){
-        ChessPiece[][] board = this.game.GetBoard();
-        ChessPiece captured = move.capturedPiece;
-        int x = move.targetX;
-        int y = move.targetY;
-
-        // 1. Handle En Passant
-        if (move.isEnPassant && captured != null) {
-            captured.RemoveFromGame(); // This clears the square next to the target
-        }
-
-        // 2. Handle Castling
-        if (move.isRightCastling || move.isLeftCastling) {
-            int rookX = move.isRightCastling ? 7 : 0;
-            int rookTargetX = move.isRightCastling ? 5 : 3;
-            ChessPiece rook = board[this.yPos][rookX];
-
-            MoveTo(x, y, false); // Move King
-            if (rook != null) rook.MoveTo(rookTargetX, y, false); // Move Rook
-            return;
-        }
-
-        // 3. Standard Move/Capture
-        if (captured != null) {
-            this.player.AddCapture(captured);
-            captured.RemoveFromGame();
-        }
-        MoveTo(x, y, false);
-
     }
 
     public ArrayList<ChessMove> GetMoves(){

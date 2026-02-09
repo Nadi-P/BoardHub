@@ -17,9 +17,14 @@ import java.util.Set;
 
 public interface ChessLogic {
     interface Constants{
-        int classicModeDuration = 10*60*1000;
-        int blitzModeDuration = 3*60*1000;
-        int bulletModeDuration = 60*1000;
+        int[] modesDurations = {
+                60*1000,
+                3*60*1000,
+                10*60*1000,
+                30*60*1000
+        };
+
+        int timerCountdownInterval = 1000;
 
         int blackPawnIcon = R.drawable.chess_piece_black_pawn;
         int blackRookIcon = R.drawable.chess_piece_black_rook;
@@ -178,7 +183,7 @@ public interface ChessLogic {
 
         // 2. Refresh the MockBoard AFTER the move is simulated
         MockPiece[][] duplicate = DuplicateBoard(game);
-        King king = isWhiteTurn ? game.GetWhiteKing() : game.GetBlackKing();
+        King king = game.GetKing(isWhiteTurn);
         boolean inCheck = IsKingThreatened(king, duplicate);
 
 

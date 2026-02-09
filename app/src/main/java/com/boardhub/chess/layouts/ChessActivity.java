@@ -1,4 +1,4 @@
-package com.boardhub.chess.layoutsLogic;
+package com.boardhub.chess.layouts;
 
 import android.os.Bundle;
 
@@ -14,8 +14,15 @@ public class ChessActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ChessUI.SetChessFragmentManager(getSupportFragmentManager(), getBaseContext());
-        ChessGame game = new ChessGame(2, 0);
-        ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game,true));
+        boolean showGameScreen = false;
+        boolean showWhiteSide = true;
+        if (showGameScreen) {
+            ChessGame game = new ChessGame("a", showWhiteSide, 10*60*1000);
+            ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game, true));
+        }
+        else {
+            ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
+        }
         setContentView(R.layout.chess_activity);
     }
 }

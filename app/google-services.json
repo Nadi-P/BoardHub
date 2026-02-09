@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "998907894009",
+    "project_id": "boardhub-b704c",
+    "storage_bucket": "boardhub-b704c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:998907894009:android:42a3c4db3b8467f204aa28",
+        "android_client_info": {
+          "package_name": "com.boardhub"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNbNzlAPCnDpiXQ9IzNs-ARoU3d4JLfjA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

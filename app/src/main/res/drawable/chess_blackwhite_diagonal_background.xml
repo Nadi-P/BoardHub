@@ -1,0 +1,28 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+<item>
+    <vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="100dp"
+        android:height="100dp"
+        android:viewportWidth="100"
+        android:viewportHeight="100">
+
+        <!-- Top-left black triangle -->
+        <path
+            android:fillColor="@android:color/black"
+            android:pathData="M0,0 L100,0 L0,100 Z"/>
+
+        <!-- Bottom-right white triangle -->
+        <path
+            android:fillColor="@android:color/white"
+            android:pathData="M100,0 L100,100 L0,100 Z"/>
+
+    </vector>
+</item>
+
+<item>
+    <shape android:shape="rectangle">
+        <solid android:color="@android:color/transparent" />
+        <corners android:radius="8dp" />
+    </shape>
+</item>
+</layer-list>

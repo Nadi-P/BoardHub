@@ -41,6 +41,7 @@ public class Pawn extends ChessPiece{
 
         if (IsPositionInBoard(nextX, nextY) && game.GetPieceAt(nextX, nextY) == null) {
             ChessMove move1 = new ChessMove(this, null, nextX, nextY);
+            if (nextY == 0 || nextY == 7) move1.isPromotion = true;
             if (IsValidMove(move1)) possibleMoves.add(move1);
 
             // Double move from starting rank
@@ -63,6 +64,7 @@ public class Pawn extends ChessPiece{
                 // Standard capture
                 if (target != null && this.isDifferentColor(target)) {
                     ChessMove move = new ChessMove(this, target, capX, capY);
+                    if (capY == 0 || capY == 7) move.isPromotion = true;
                     if (IsValidMove(move)) possibleMoves.add(move);
                 }
 

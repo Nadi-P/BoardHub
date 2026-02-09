@@ -8,20 +8,22 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 
-    private final int LIGHT_SQUARE = Color.parseColor("#eeeed2");
-    private final int DARK_SQUARE = Color.parseColor("#769656");
-    // The yellow highlight for the piece you just picked up
-    private final int HIGHLIGHT_SELECTED = Color.parseColor("#F5F682");
-
-    // Cyan highlights for the potential destination squares
-    private final int HIGHLIGHT_CYAN_LIGHT = Color.parseColor("#11B5E4"); // Brighter for light squares
-    private final int HIGHLIGHT_CYAN_DARK = Color.parseColor("#0E94BA");  // Deeper for dark squares
-
     <color name="chess_square_light_normal">#eeeed2</color>
     <color name="chess_square_dark_normal">#769656</color>
     <color name="chess_square_light_highlight">#F5F682</color>
     <color name="chess_square_dark_highlight">#d6d911</color>
     <color name="chess_square_light_selected">#11B5E4</color>
     <color name="chess_square_dark_selected">#0E94BA</color>
+    <color name="chess_promotion_menu_background">#F3F593</color>
+    <color name="chess_background_gray_dark">#21201E</color>
+    <color name="chess_background_gray_light">#2D2C2A</color>
+    <color name="chess_button_gray_dark">#31302E</color>
+    <color name="chess_button_gray_light">#3F3E3C</color>
+    <color name="chess_button_orange_dark">#F06006</color>
+    <color name="chess_button_orange_light">#F25429</color>
+    <color name="chess_timer_disabled_background">#403E3B</color>
+    <color name="chess_subtext_color">#999999</color>
+    <color name="chess_dark_green">#5E904B</color>
+    <color name="chess_light_green">#90B661</color>
 
 </resources>
