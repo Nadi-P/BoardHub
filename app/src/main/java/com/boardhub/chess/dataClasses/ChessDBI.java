@@ -1,5 +1,7 @@
 package com.boardhub.chess.dataClasses;
 
+import android.widget.EditText;
+
 import com.boardhub.chess.layouts.ChessGameFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
@@ -17,6 +19,8 @@ import java.util.UUID;
 
 public abstract class ChessDBI {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private static final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
     private static final CollectionReference gamesCollection =
             db.collection("chessGames");
     private static final CollectionReference queueCollection =
@@ -24,6 +28,50 @@ public abstract class ChessDBI {
 
     public static ListenerRegistration ListenToGame(String gameUID, EventListener<DocumentSnapshot> listener) {
         return gamesCollection.document(gameUID).addSnapshotListener(listener);
+    }
+    // -- login and sign up ---
+
+    public interface AuthCallback {
+        void onResult(boolean success, String message);
+    }
+
+    public static void AttemptLogin(EditText etEmail, EditText etPassword, AuthCallback callback) {
+        String email = etEmail.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
+
+        if (email.isEmpty() || password.isEmpty()) {
+            callback.onResult(false, "Please fill all fields");
+            return;
+        }
+
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onResult(true, "Login Successful");
+                    } else {
+                        callback.onResult(false, "Login Failed: " + task.getException().getMessage());
+                    }
+                });
+    }
+
+    public static void AttemptSignUp(EditText etEmail, EditText etPassword, AuthCallback callback) {
+        String email = etEmail.getText().toString().trim();
+        String password = etPassword.getText().toString().trim();
+
+        // Basic Validation
+        if (email.isEmpty() || password.length() < 6) {
+            callback.onResult(false, "Email empty or password too short (min 6 chars)");
+            return;
+        }
+
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        callback.onResult(true, "Registration Successful");
+                    } else {
+                        callback.onResult(false, "Registration Failed: " + task.getException().getMessage());
+                    }
+                });
     }
 
     // --- Handle Game Updates ---
@@ -69,6 +117,9 @@ public abstract class ChessDBI {
             gameModeIndex, String preferredSide, OnMatchFoundListener listener) {
         String myUID = FirebaseAuth.getInstance().getUid();
 
+        System.out.println("Connected UID: " + myUID);
+        System.out.println(FirebaseAuth.getInstance().getCurrentUser());
+
         queueCollection
                 .whereEqualTo("gameModeIndex", gameModeIndex)
                 .orderBy("timestamp", Query.Direction.ASCENDING)
@@ -85,10 +136,15 @@ public abstract class ChessDBI {
                     }
 
                     if (match != null) {
+                        System.out.println("Attempting to join");
                         JoinExistingRequest(match, preferredSide, myUID, listener);
                     } else {
+                        System.out.println("Creating new Queue");
                         CreateNewRequest(gameModeIndex, preferredSide, myUID, listener);
                     }
+                }).addOnFailureListener(e -> {
+                    System.out.println("Error: " + e.getMessage());
+                    System.out.println("Attempt Failed Miserably");
                 });
     }
 
@@ -129,6 +185,7 @@ public abstract class ChessDBI {
         }).addOnSuccessListener(result -> {
             if (result != null) {
                 Object[] data = (Object[]) result;
+                System.out.println("Joined Game");
                 listener.onMatchFound((String) data[0], (boolean) data[1]);
             }
         });
@@ -142,6 +199,7 @@ public abstract class ChessDBI {
         request.put("status", "WAITING");
         request.put("timestamp", FieldValue.serverTimestamp());
 
+        System.out.println("Created New Game");
         queueCollection.document(myUID).set(request);
 
         queueCollection.document(myUID).addSnapshotListener((snapshot, e) -> {

@@ -5,7 +5,6 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.boardhub.R;
-import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessUI;
 
 public class ChessActivity extends AppCompatActivity {
@@ -14,15 +13,25 @@ public class ChessActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ChessUI.SetChessFragmentManager(getSupportFragmentManager(), getBaseContext());
-        boolean showGameScreen = false;
-        boolean showWhiteSide = true;
-        if (showGameScreen) {
-            ChessGame game = new ChessGame("a", showWhiteSide, 10*60*1000);
-            ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game, true));
-        }
-        else {
-            ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
-        }
+
+//        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+//        if (mAuth.getCurrentUser() == null) {
+//            mAuth.signInAnonymously().addOnSuccessListener(authResult -> {
+//                // Now you have a UID! You can proceed to the menu
+//                Log.d("AUTH", "Logged in as: " + authResult.getUser().getUid());
+//            });
+//        }
+
+//        boolean showGameScreen = false;
+//        boolean showWhiteSide = true;
+//        if (showGameScreen) {
+//            ChessGame game = new ChessGame("a", showWhiteSide, 10*60*1000);
+//            ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game, true));
+//        }
+//        else {
+//            ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
+//        }
         setContentView(R.layout.chess_activity);
+        ChessUI.ReplaceChessScreen(AuthLogin.newInstance());
     }
 }
