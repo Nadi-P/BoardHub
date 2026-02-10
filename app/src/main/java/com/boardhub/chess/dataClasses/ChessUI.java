@@ -2,6 +2,7 @@ package com.boardhub.chess.dataClasses;
 
 // IMPORTANT: Use the androidx version, not android.app
 import android.content.Context;
+import android.view.View;
 import android.widget.ImageButton;
 
 import androidx.core.content.ContextCompat;
@@ -52,4 +53,6 @@ public abstract class ChessUI {
                 .addToBackStack(null)
                 .commit();
     }
+
+    public static View CreateSChessGameOverPopup(boolean gameOverIndex, boolean gameOverReasonIndex, )
 }

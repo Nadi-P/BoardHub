@@ -22,6 +22,10 @@ public class ChessMove {
     public int promotionPieceIndex;
     public long whiteTime;
     public long blackTime;
+    public boolean isCheckingOpponent;
+
+    public boolean isCheckmate;
+    public boolean isStalemate;
 
     public ChessMove(ChessPiece movedPiece, ChessPiece capturedPiece, int targetX, int targetY) {
         this.movedPiece = movedPiece;
@@ -87,8 +91,12 @@ public class ChessMove {
             ChessPiece rook = board[movedPiece.GetYPos()][rookX];
 
             movedPiece.MoveTo(x, y, false); // Move King
-            if (rook != null) rook.MoveTo(rookTargetX, y, false); // Move Rook
+            if (rook != null) {
+                rook.MoveTo(rookTargetX, y, false); // Move Rook
+            }
+
             game.SetIsWhiteTurn(!movedPiece.GetIsWhite());
+            game.GetMovesRecord().add(this);
             return;
         }
 
@@ -101,6 +109,7 @@ public class ChessMove {
                 case 3: new Bishop(game, x, y, movedPiece.GetIsWhite()); break;
             }
             game.SetIsWhiteTurn(!movedPiece.GetIsWhite());
+            game.GetMovesRecord().add(this);
             return;
         }
 
@@ -121,6 +130,7 @@ public class ChessMove {
         }
         movedPiece.MoveTo(x, y, false);
         game.SetIsWhiteTurn(!movedPiece.GetIsWhite());
+        game.GetMovesRecord().add(this);
     }
 
     public Map<String, Object> FormatToPacket() {

@@ -103,6 +103,9 @@ public interface ChessLogic {
                     ChessMove move = new ChessMove(piece, pieceAtSquare, nextX, nextY);
                     if (IsValidMove(move)) possibleMoves.add(move);
                     if (pieceAtSquare != null){
+                        if (pieceAtSquare instanceof King) {
+                            move.isCheckingOpponent = true;
+                        }
                         break;
                     }
                 }
@@ -132,6 +135,9 @@ public interface ChessLogic {
 
                 if (pieceAtSquare == null || piece.isDifferentColor(pieceAtSquare)) {
                     ChessMove move = new ChessMove(piece, pieceAtSquare, nextX, nextY);
+                    if (pieceAtSquare instanceof King) {
+                        move.isCheckingOpponent = true;
+                    }
                     if (IsValidMove(move)) possibleMoves.add(move);
                 }
             }
@@ -184,12 +190,32 @@ public interface ChessLogic {
         // 2. Refresh the MockBoard AFTER the move is simulated
         MockPiece[][] duplicate = DuplicateBoard(game);
         King king = game.GetKing(isWhiteTurn);
-        boolean inCheck = IsKingThreatened(king, duplicate);
+        boolean resultsInSelfCheck = IsKingThreatened(king, duplicate);
 
+        if (!resultsInSelfCheck) {
+            // Get all opponent pieces and check for any legal responses
+            ArrayList<ChessPiece> opponentPieces = game.GetPieces(!isWhiteTurn);
+            boolean opponentHasLegalMoves = false;
 
+            for (ChessPiece p : opponentPieces) {
+                // Ensure piece is still on board and has at least one valid move
+                if (game.GetBoard()[p.GetYPos()][p.GetXPos()] == p && !p.GetMoves().isEmpty()) {
+                    opponentHasLegalMoves = true;
+                    break;
+                }
+            }
+
+            if (!opponentHasLegalMoves) {
+                if (move.isCheckingOpponent) {
+                    move.isCheckmate = true; // No moves + In Check = MATE
+                } else {
+                    move.isStalemate = true;  // No moves + Not in Check = DRAW
+                }
+            }
+        }
         // 3. RESTORE EVERYTHING
         movedPiece.MoveTo(initialX, initialY, true);
-
+        //3.1 restore en passant
         if (move.isEnPassant) {
             // Put the en-passant victim back where it was
             game.GetBoard()[capturedPiece.GetYPos()][capturedPiece.GetXPos()] = capturedPiece;
@@ -197,12 +223,12 @@ public interface ChessLogic {
         } else {
             game.GetBoard()[targetY][targetX] = capturedPiece;
         }
-
+        //3.2 restore castling
         if (castleRook != null) {
             castleRook.MoveTo(rookInitX, initialY, true);
         }
 
-        return !inCheck;
+        return !resultsInSelfCheck;
     }
 
     static boolean IsKingThreatened(King king, MockPiece[][] duplicate){

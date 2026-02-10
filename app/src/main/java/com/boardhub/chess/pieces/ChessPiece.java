@@ -25,6 +25,7 @@ public class ChessPiece {
 
         this.game = game;
         this.game.GetBoard()[startY][startX] = this;
+        this.game.GetPieces(isWhite).add(this);
 
     }
 
@@ -67,7 +68,7 @@ public class ChessPiece {
     }
 
     public void RemoveFromGame(){
-        System.out.println(this.toString() + " removed from game.");
+        this.game.GetPieces(isWhite).remove(this);
         this.game.GetBoard()[this.yPos][this.xPos] = null;
     }
 

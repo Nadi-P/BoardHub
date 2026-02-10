@@ -9,6 +9,7 @@ import com.boardhub.chess.pieces.Queen;
 import com.boardhub.chess.pieces.Rook;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -19,12 +20,17 @@ public class ChessGame implements Serializable {
     final private ChessPiece[][] board = new ChessPiece[8][8];
     private boolean isWhiteTurn;
 
+    private final ArrayList<ChessMove> movesRecord = new ArrayList<>();
+
     private long whiteTime;
     HashMap<String, Integer> whiteCaptures = new HashMap<>();
+    ArrayList<ChessPiece> whitePieces = new ArrayList<>();
     King whiteKing;
 
     private long blackTime;
     HashMap<String, Integer> blackCaptures = new HashMap<>();
+    ArrayList<ChessPiece> blackPieces = new ArrayList<>();
+
     King blackKing;
 
     //new game of chess
@@ -104,6 +110,11 @@ public class ChessGame implements Serializable {
     public boolean IsWhiteTurn() {return isWhiteTurn; }
     public King GetKing(boolean forWhite) { return (forWhite) ? whiteKing : blackKing; }
     public long GetTime(boolean forWhite) { return (forWhite) ? whiteTime : blackTime; }
+    public ArrayList<ChessPiece> GetPieces(boolean forWhite) {
+        if (forWhite) return whitePieces;
+        else return  blackPieces;
+    }
+    public ArrayList<ChessMove> GetMovesRecord() {return this.movesRecord; }
     public boolean GetAssignedIsWhite() { return assignedIsWhite; }
     public void SetIsWhiteTurn(boolean isWhiteTurn) { this.isWhiteTurn = isWhiteTurn; }
 

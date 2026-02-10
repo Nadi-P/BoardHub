@@ -1,11 +1,14 @@
 package com.boardhub.chess.layouts;
 
 import android.os.Bundle;
+import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.boardhub.R;
+import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessUI;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class ChessActivity extends AppCompatActivity {
 
@@ -21,7 +24,7 @@ public class ChessActivity extends AppCompatActivity {
 //                Log.d("AUTH", "Logged in as: " + authResult.getUser().getUid());
 //            });
 //        }
-
+//
 //        boolean showGameScreen = false;
 //        boolean showWhiteSide = true;
 //        if (showGameScreen) {
