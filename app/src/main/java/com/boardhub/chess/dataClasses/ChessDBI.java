@@ -89,11 +89,6 @@ public abstract class ChessDBI {
         packet.put("yInitial", -1);
         packet.put("xTarget", -1);
         packet.put("yTarget", -1);
-        packet.put("isRightCastling", false);
-        packet.put("isLeftCastling", false);
-        packet.put("isEnPassant", false);
-        packet.put("isPromotion", false);
-        packet.put("promotionPieceIndex", -1);
 
         gamesCollection.document(game.GetUID()).set(packet);
     }

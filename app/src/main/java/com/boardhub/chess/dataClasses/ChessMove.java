@@ -33,7 +33,8 @@ public class ChessMove {
             isDrawOffer,
             isDrawAccept,
             isDrawDecline,
-            isRepetition;
+            isRepetition,
+            isBoardInitialization;
     public String boardFen;
     public int initialX, initialY;
 
@@ -90,66 +91,55 @@ public class ChessMove {
                 break;
         }
     }
-
+    // endgames
     public ChessMove(ChessGame game, Map<String, Object> packet) {
         this.game = game;
         ChessPiece[][] board = game.GetBoard();
 
-        // 1. Check for nulls before converting Long to int
-        Object xInitObj = packet.get("xInitial");
-        Object yInitObj = packet.get("yInitial");
+        // 1. Use Long -> int with null checks
+        this.initialX = packet.containsKey("xInitial") ? ((Long) packet.get("xInitial")).intValue() : -1;
+        this.initialY = packet.containsKey("yInitial") ? ((Long) packet.get("yInitial")).intValue() : -1;
+        this.targetX = packet.containsKey("xTarget") ? ((Long) packet.get("xTarget")).intValue() : -1;
+        this.targetY = packet.containsKey("yTarget") ? ((Long) packet.get("yTarget")).intValue() : -1;
+        this.promotionPieceIndex = packet.containsKey("promotionPieceIndex") ? ((Long) packet.get("promotionPieceIndex")).intValue() : -1;
 
-        // If these are null, it's an initialization packet, not a move packet
-        int xInitial = (xInitObj != null) ? ((Long) xInitObj).intValue() : -1;
-        int yInitial = (yInitObj != null) ? ((Long) yInitObj).intValue() : -1;
-
-        this.initialX = xInitial;
-        this.initialY = yInitial;
-        this.movedPiece = (yInitial >= 0 && xInitial >= 0) ? board[yInitial][xInitial] : null;
-
-        Object xTargetObj = packet.get("xTarget");
-        Object yTargetObj = packet.get("yTarget");
-        this.targetX = (xTargetObj != null) ? ((Long) xTargetObj).intValue() : -1;
-        this.targetY = (yTargetObj != null) ? ((Long) yTargetObj).intValue() : -1;
-
-        // 2. Safely parse times
-        this.whiteTime = packet.containsKey("whiteTime") ? (long) packet.get("whiteTime") : 0;
-        this.blackTime = packet.containsKey("blackTime") ? (long) packet.get("blackTime") : 0;
-
-        Object promoObj = packet.get("promotionPieceIndex");
-        this.promotionPieceIndex = (promoObj != null) ? ((Long) promoObj).intValue() : 0;
-
-        // 3. Use a helper method for safe boolean unboxing
-        this.isWhiteTurn = safeBool(packet, "isWhiteTurn", true);
-        this.isRightCastling = safeBool(packet, "isRightCastling", false);
-        this.isLeftCastling = safeBool(packet, "isLeftCastling", false);
-        this.isEnPassant = safeBool(packet, "isEnPassant", false);
-        this.isPromotion = safeBool(packet, "isPromotion", false);
-        this.isCheckingOpponent = safeBool(packet, "isCheckingOpponent", false);
-        this.isCheckmate = safeBool(packet, "isCheckmate", false);
-        this.isStalemate = safeBool(packet, "isStalemate", false);
-        this.isDraw = safeBool(packet, "isDraw", false);
-        this.isResignation = safeBool(packet, "isResignation", false);
-        this.isOutOfTime = safeBool(packet, "isOutOfTime", false);
-        this.isDrawOffer = safeBool(packet, "isDrawOffer", false);
-        this.isDrawAccept = safeBool(packet, "isDrawAccept", false);
-        this.isDrawDecline = safeBool(packet, "isDrawDecline", false);
-        this.isRepetition = safeBool(packet, "isRepetition", false);
+        // 2. Use a helper for Booleans to prevent unboxing nulls
+        this.isWhiteTurn = getBool(packet, "isWhiteTurn", true);
+        this.isRightCastling = getBool(packet, "isRightCastling", false);
+        this.isLeftCastling = getBool(packet, "isLeftCastling", false);
+        this.isEnPassant = getBool(packet, "isEnPassant", false);
+        this.isPromotion = getBool(packet, "isPromotion", false);
+        this.isCheckingOpponent = getBool(packet, "isCheckingOpponent", false);
+        this.isCheckmate = getBool(packet, "isCheckmate", false);
+        this.isStalemate = getBool(packet, "isStalemate", false);
+        this.isDraw = getBool(packet, "isDraw", false);
+        this.isResignation = getBool(packet, "isResignation", false);
+        this.isOutOfTime = getBool(packet, "isOutOfTime", false);
+        this.isDrawOffer = getBool(packet, "isDrawOffer", false);
+        this.isDrawAccept = getBool(packet, "isDrawAccept", false);
+        this.isDrawDecline = getBool(packet, "isDrawDecline", false);
+        this.isRepetition = getBool(packet, "isRepetition", false);
 
         this.boardFen = (String) packet.get("boardFEN");
+        this.whiteTime = packet.containsKey("whiteTime") ? (long) packet.get("whiteTime") : 600000;
+        this.blackTime = packet.containsKey("blackTime") ? (long) packet.get("blackTime") : 600000;
 
-        // 4. Only calculate captured piece if we actually have a valid target
-        if (this.targetX != -1) {
+        // 3. Reconstruct piece references only if indices are valid
+        if (initialX != -1 && initialY != -1) {
+            this.movedPiece = board[initialY][initialX];
             if (this.isEnPassant) {
-                this.capturedPiece = game.GetPieceAt(targetX, yInitial);
-            } else {
+                this.capturedPiece = game.GetPieceAt(targetX, initialY);
+            } else if (targetX != -1 && targetY != -1) {
                 this.capturedPiece = game.GetPieceAt(targetX, targetY);
             }
         }
     }
-    private boolean safeBool(Map<String, Object> packet, String key, boolean defaultValue) {
-        Object val = packet.get(key);
-        return (val instanceof Boolean) ? (Boolean) val : defaultValue;
+    private boolean getBool(Map<String, Object> packet, String key, boolean defaultValue) {
+        Object value = packet.get(key);
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        return defaultValue;
     }
     public Map<String, Object> FormatToPacket() {
         Map<String, Object> packet = new HashMap<>();
@@ -179,6 +169,7 @@ public class ChessMove {
         packet.put("isDrawAccept", isDrawAccept);
         packet.put("isDrawDecline", isDrawDecline);
         packet.put("isRepetition", isRepetition);
+        packet.put("isBoardInitialization", isBoardInitialization);
 
         return packet;
     }

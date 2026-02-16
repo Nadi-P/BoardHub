@@ -216,9 +216,12 @@ public class ChessGameFragment extends Fragment {
 
             boolean isWhiteTurnInPacket = (boolean) packet.get("isWhiteTurn");
             ChessMove receivedMove = new ChessMove(game, packet);
-            if (HandleIrregularMove(receivedMove)) return;
+            if (HandleIrregularMove(receivedMove)) {
+                System.out.println("Detected Irregular move");
+                return;
+            }
 
-            if (isWhiteTurnInPacket != game.IsWhiteTurn()) {
+            if (isWhiteTurnInPacket == game.IsWhiteTurn()) {
                 receivedMove.Execute();
 
                 moveInitialX = receivedMove.initialX;
@@ -235,6 +238,9 @@ public class ChessGameFragment extends Fragment {
                 movePreviousIndex = game.GetMovesRecord().size()-1;
                 DisableForwardButton();
                 EnableBackButton();
+            }
+            else {
+                System.out.println("Turns have switched");
             }
         });
     }
@@ -277,6 +283,7 @@ public class ChessGameFragment extends Fragment {
     }
     private void ExecuteMove(ChessMove move) {
         move.CheckIsCheckmate();
+        System.out.println("Executing move");
 
         if (!isSingleplayer){
             ChessDBI.SaveMove(move);
@@ -623,6 +630,8 @@ public class ChessGameFragment extends Fragment {
         if (!isSingleplayer && (isWhite != game.IsWhiteTurn())) {
             return;
         }
+
+        System.out.println("Passed");
 
         promotionsMenu.setVisibility(View.GONE);
         ChessPiece clickedPiece = game.GetPieceAt(x, y);
