@@ -18,8 +18,8 @@ public class ChessActivity extends AppCompatActivity {
         ChessUI.SetChessFragmentManager(getSupportFragmentManager(), getBaseContext());
 
         setContentView(R.layout.chess_activity);
-//        ChessUI.ReplaceChessScreen(AuthLogin.newInstance());
-        ChessGame game = new ChessGame("UID", true, 0);
-        ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game, true));
+        ChessUI.ReplaceChessScreen(AuthLogin.newInstance());
+//        ChessGame game = new ChessGame("UID", true, 0);
+//        ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game, true));
     }
 }

@@ -90,51 +90,66 @@ public class ChessMove {
                 break;
         }
     }
-    // endgames
+
     public ChessMove(ChessGame game, Map<String, Object> packet) {
         this.game = game;
         ChessPiece[][] board = game.GetBoard();
 
-        // Use Long and then convert to int to avoid ClassCastException
-        int xInitial = ((Long) packet.get("xInitial")).intValue();
-        int yInitial = ((Long) packet.get("yInitial")).intValue();
+        // 1. Check for nulls before converting Long to int
+        Object xInitObj = packet.get("xInitial");
+        Object yInitObj = packet.get("yInitial");
 
-        this.movedPiece = board[yInitial][xInitial];
-        this.targetX = ((Long) packet.get("xTarget")).intValue();
-        this.targetY = ((Long) packet.get("yTarget")).intValue();
+        // If these are null, it's an initialization packet, not a move packet
+        int xInitial = (xInitObj != null) ? ((Long) xInitObj).intValue() : -1;
+        int yInitial = (yInitObj != null) ? ((Long) yInitObj).intValue() : -1;
 
-        whiteTime = (long) packet.get("whiteTime");
-        blackTime = (long) packet.get("blackTime");
-
-        // Do the same for all other numerical fields
-        this.promotionPieceIndex = ((Long) packet.get("promotionPieceIndex")).intValue();
-
-        // Boolean fields do not need this conversion
-        this.isWhiteTurn = (boolean) packet.get("isWhiteTurn");
-        this.isRightCastling = (boolean) packet.get("isRightCastling");
-        this.isLeftCastling = (boolean) packet.get("isLeftCastling");
-        this.isEnPassant = (boolean) packet.get("isEnPassant");
-        this.isPromotion = (boolean) packet.get("isPromotion");
-        this.isCheckingOpponent = (boolean) packet.get("isCheckingOpponent");
-        this.isCheckmate = (boolean) packet.get("isCheckmate");
-        this.isStalemate = (boolean) packet.get("isStalemate");
-        this.isDraw = (boolean) packet.get("isDraw");
-        this.isResignation = (boolean) packet.get("isResignation");
-        this.isOutOfTime = (boolean) packet.get("isOutOfTime");
-        this.isDrawOffer = (boolean) packet.get("isDrawOffer");
-        this.isDrawAccept = (boolean) packet.get("isDrawAccept");
-        this.isDrawDecline = (boolean) packet.get("isDrawDecline");
-        this.isRepetition = (boolean) packet.get("isRepetition");
         this.initialX = xInitial;
         this.initialY = yInitial;
+        this.movedPiece = (yInitial >= 0 && xInitial >= 0) ? board[yInitial][xInitial] : null;
 
+        Object xTargetObj = packet.get("xTarget");
+        Object yTargetObj = packet.get("yTarget");
+        this.targetX = (xTargetObj != null) ? ((Long) xTargetObj).intValue() : -1;
+        this.targetY = (yTargetObj != null) ? ((Long) yTargetObj).intValue() : -1;
 
-        // Recalculate captured piece logic
-        if (this.isEnPassant) {
-            this.capturedPiece = game.GetPieceAt(targetX, yInitial);
-        } else {
-            this.capturedPiece = game.GetPieceAt(targetX, targetY);
+        // 2. Safely parse times
+        this.whiteTime = packet.containsKey("whiteTime") ? (long) packet.get("whiteTime") : 0;
+        this.blackTime = packet.containsKey("blackTime") ? (long) packet.get("blackTime") : 0;
+
+        Object promoObj = packet.get("promotionPieceIndex");
+        this.promotionPieceIndex = (promoObj != null) ? ((Long) promoObj).intValue() : 0;
+
+        // 3. Use a helper method for safe boolean unboxing
+        this.isWhiteTurn = safeBool(packet, "isWhiteTurn", true);
+        this.isRightCastling = safeBool(packet, "isRightCastling", false);
+        this.isLeftCastling = safeBool(packet, "isLeftCastling", false);
+        this.isEnPassant = safeBool(packet, "isEnPassant", false);
+        this.isPromotion = safeBool(packet, "isPromotion", false);
+        this.isCheckingOpponent = safeBool(packet, "isCheckingOpponent", false);
+        this.isCheckmate = safeBool(packet, "isCheckmate", false);
+        this.isStalemate = safeBool(packet, "isStalemate", false);
+        this.isDraw = safeBool(packet, "isDraw", false);
+        this.isResignation = safeBool(packet, "isResignation", false);
+        this.isOutOfTime = safeBool(packet, "isOutOfTime", false);
+        this.isDrawOffer = safeBool(packet, "isDrawOffer", false);
+        this.isDrawAccept = safeBool(packet, "isDrawAccept", false);
+        this.isDrawDecline = safeBool(packet, "isDrawDecline", false);
+        this.isRepetition = safeBool(packet, "isRepetition", false);
+
+        this.boardFen = (String) packet.get("boardFEN");
+
+        // 4. Only calculate captured piece if we actually have a valid target
+        if (this.targetX != -1) {
+            if (this.isEnPassant) {
+                this.capturedPiece = game.GetPieceAt(targetX, yInitial);
+            } else {
+                this.capturedPiece = game.GetPieceAt(targetX, targetY);
+            }
         }
+    }
+    private boolean safeBool(Map<String, Object> packet, String key, boolean defaultValue) {
+        Object val = packet.get(key);
+        return (val instanceof Boolean) ? (Boolean) val : defaultValue;
     }
     public Map<String, Object> FormatToPacket() {
         Map<String, Object> packet = new HashMap<>();
