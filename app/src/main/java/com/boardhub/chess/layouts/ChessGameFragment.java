@@ -238,9 +238,10 @@ public class ChessGameFragment extends Fragment {
                 movePreviousIndex = game.GetMovesRecord().size()-1;
                 DisableForwardButton();
                 EnableBackButton();
-            }
-            else {
-                System.out.println("Turns have switched");
+
+                if (receivedMove.isCheckmate) HandleCheckmate();
+                else if (receivedMove.isStalemate) HandleStalemate();
+                else if (receivedMove.isDraw) HandleDraw();
             }
         });
     }
@@ -517,16 +518,7 @@ public class ChessGameFragment extends Fragment {
     // --- Game Ends ---
 
     private boolean HandleIrregularMove(ChessMove move) {
-        if (move.isCheckmate) {
-            HandleCheckmate();
-            return true;
-        } else if (move.isStalemate) {
-            HandleStalemate();
-            return true;
-        } else if (move.isDraw) {
-            HandleDraw();
-            return true;
-        } else if (move.isResignation) {
+        if (move.isResignation) {
             HandleResignation();
             return true;
         } else if (move.isOutOfTime) {
@@ -595,8 +587,8 @@ public class ChessGameFragment extends Fragment {
         StopTimers();
         isGameOver = true;
         gameListener = null;
+        activeMoves.clear();
         DisableOptionsButton();
-
 
         View popup = ChessUI.CreateSChessGameOverPopup(
                 inflater,
@@ -604,7 +596,7 @@ public class ChessGameFragment extends Fragment {
                 isWIn,
                 gameOverReasonIndex,
                 game.GetMovesRecord().size(),
-                !game.IsWhiteTurn()
+                game.IsWhiteTurn()
         );
 
         Button btnReviewGame = popup.findViewById(R.id.btnReviewGame);
@@ -737,14 +729,14 @@ public class ChessGameFragment extends Fragment {
             String fen = move.boardFen;
             for (int row = 0; row < 8; row++) {
                 for (int col = 0; col < 8; col++) {
-                    // 1. Calculate the FEN index (Row 0 is Rank 8)
-                    int fenIndex = row * 8 + col;
-                    String pieceChar = String.valueOf(fen.charAt(fenIndex));
 
-                    // 2. Map Visual square to Logical coordinates for highlight comparison
-                    // If player is white, visual row 0 is rank 8 (logicY 7)
                     int logicX = isWhite ? col : 7 - col;
                     int logicY = isWhite ? 7 - row : row;
+
+                    int fenRow = 7 - logicY;
+                    int fenCol = logicX;
+                    int fenIndex = fenRow * 8 + fenCol;
+                    String pieceChar = String.valueOf(fen.charAt(fenIndex));
 
                     // 3. Check if this square was the start or end of the move
                     boolean isMatch = (logicX == move.initialX && logicY == move.initialY) ||
