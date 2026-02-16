@@ -1,7 +1,5 @@
 package com.boardhub.chess.pieces;
 
-import static com.boardhub.chess.dataClasses.ChessLogic.IsValidMove;
-
 import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
 import com.boardhub.chess.dataClasses.ChessMove;
@@ -60,7 +58,7 @@ public class King extends ChessPiece{
                     board[kingRow][6] == null){
                 ChessMove castleRight = new ChessMove(this, null, 6, kingRow);
                 castleRight.isRightCastling = true;
-                if (IsValidMove(castleRight)) moves.add(castleRight);
+                castleRight.Add(moves);
             }
             if (rookLeft != null && !rookLeft.HasMoved() &&
                     board[kingRow][1] == null &&
@@ -68,7 +66,7 @@ public class King extends ChessPiece{
                     board[kingRow][3] == null){
                 ChessMove castleLeft = new ChessMove(this, null, 2, kingRow);
                 castleLeft.isLeftCastling = true;
-                if (IsValidMove(castleLeft)) moves.add(castleLeft);
+                castleLeft.Add(moves);
             }
         }
         return moves;

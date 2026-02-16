@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.UUID;
 
 public class ChessGame implements Serializable {
-    private String UID;
+    private String UID, initialFen;
     boolean assignedIsWhite;
 
     final private ChessPiece[][] board = new ChessPiece[8][8];
@@ -95,6 +95,7 @@ public class ChessGame implements Serializable {
         this.whiteKing = whiteKing;
         this.blackKing = blackKing;
 
+        initialFen = GetBoardFEN();
         ChessDBI.SaveGame(this);
     }
 
@@ -110,10 +111,7 @@ public class ChessGame implements Serializable {
     public boolean IsWhiteTurn() {return isWhiteTurn; }
     public King GetKing(boolean forWhite) { return (forWhite) ? whiteKing : blackKing; }
     public long GetTime(boolean forWhite) { return (forWhite) ? whiteTime : blackTime; }
-    public ArrayList<ChessPiece> GetPieces(boolean forWhite) {
-        if (forWhite) return whitePieces;
-        else return  blackPieces;
-    }
+    public ArrayList<ChessPiece> GetPieces(boolean forWhite) { return (forWhite) ? whitePieces : blackPieces; }
     public ArrayList<ChessMove> GetMovesRecord() {return this.movesRecord; }
     public boolean GetAssignedIsWhite() { return assignedIsWhite; }
     public void SetIsWhiteTurn(boolean isWhiteTurn) { this.isWhiteTurn = isWhiteTurn; }
@@ -153,13 +151,17 @@ public class ChessGame implements Serializable {
     public String GetBoardFEN(){
         StringBuilder boardBuilder = new StringBuilder();
         ChessPiece[][] board = this.board;
+        // Standard FEN starts at Rank 8 (index 7) and goes down to Rank 1 (index 0)
         for (int y = 7; y >= 0; y--){
             for (int x = 0; x < 8; x++){
                 ChessPiece piece = board[y][x];
                 if (piece != null) boardBuilder.append(piece.GetFENid());
-                else boardBuilder.append(ChessLogic.Constants.FENChars[12]);
+                else boardBuilder.append(ChessLogic.Constants.FENChars[12]); // Assuming '.'
             }
         }
         return boardBuilder.toString();
     }
+
+    public String GetInitialFEN(){
+        return initialFen; }
 }

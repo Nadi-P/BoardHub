@@ -18,7 +18,7 @@ import java.util.Set;
 public interface ChessLogic {
     interface Constants{
         int[] modesDurations = {
-                60*1000,
+                5*1000,
                 3*60*1000,
                 10*60*1000,
                 30*60*1000
@@ -68,9 +68,31 @@ public interface ChessLogic {
                 Map.entry("wQueen", whiteQueenText),
                 Map.entry("wKing", whiteKingText)
         );
+
+        Map<String, Integer> FENtoIconMap = Map.ofEntries(
+                Map.entry("r", R.drawable.chess_piece_black_rook),
+                Map.entry("n", R.drawable.chess_piece_black_knight),
+                Map.entry("b", R.drawable.chess_piece_black_bishop),
+                Map.entry("q", R.drawable.chess_piece_black_queen),
+                Map.entry("k", R.drawable.chess_piece_black_king),
+                Map.entry("p", R.drawable.chess_piece_black_pawn),
+                Map.entry("R", R.drawable.chess_piece_white_rook),
+                Map.entry("N", R.drawable.chess_piece_white_knight),
+                Map.entry("B", R.drawable.chess_piece_white_bishop),
+                Map.entry("Q", R.drawable.chess_piece_white_queen),
+                Map.entry("K", R.drawable.chess_piece_white_king),
+                Map.entry("P", R.drawable.chess_piece_white_pawn),
+                Map.entry("e", 0)
+        );
         String[] pieceTypes = {"King", "Queen", "Rook", "Bishop", "Knight", "Pawn"};
 
         String[] FENChars = {"R", "N", "B", "Q", "K", "P", "r", "n", "b", "q", "k", "p", "e"};
+
+        String[] winReasons = {"by Checkmate", "Opponent out of time", "by Resignation"};
+        String[] drawReasons = {"Insufficient Materials", "Agreed Draw", "Repetition on Moves"};
+
+
+
 
         int[][] rookDirections = new int[][]{
                 {1, 0}, {-1, 0}, {0, 1}, {0, -1}};
@@ -101,17 +123,11 @@ public interface ChessLogic {
 
                 if (pieceAtSquare == null || piece.isDifferentColor(pieceAtSquare)) {
                     ChessMove move = new ChessMove(piece, pieceAtSquare, nextX, nextY);
-                    if (IsValidMove(move)) possibleMoves.add(move);
-                    if (pieceAtSquare != null){
-                        if (pieceAtSquare instanceof King) {
-                            move.isCheckingOpponent = true;
-                        }
-                        break;
-                    }
+                    move.Add(possibleMoves);
+                    if (pieceAtSquare != null) break;
                 }
-                else {
-                    break;
-                }
+                else break;
+
                 nextX += dir[0];
                 nextY += dir[1];
             }
@@ -138,7 +154,7 @@ public interface ChessLogic {
                     if (pieceAtSquare instanceof King) {
                         move.isCheckingOpponent = true;
                     }
-                    if (IsValidMove(move)) possibleMoves.add(move);
+                    move.Add(possibleMoves);
                 }
             }
         }
@@ -151,86 +167,6 @@ public interface ChessLogic {
     }
 
     // Checks and Board Validations
-
-    static boolean IsValidMove(ChessMove move){
-        ChessPiece movedPiece = move.movedPiece;
-        ChessPiece capturedPiece = move.capturedPiece;
-        ChessGame game = movedPiece.GetGame();
-
-        int targetX = move.targetX;
-        int targetY = move.targetY;
-        int initialX = movedPiece.GetXPos();
-        int initialY = movedPiece.GetYPos();
-        boolean isWhiteTurn = movedPiece.GetIsWhite();
-
-        // --- Special Simulation: Castling ---
-        Rook castleRook = null;
-        int rookInitX = -1, rookTargetX = -1;
-        if (move.isRightCastling || move.isLeftCastling) {
-            rookInitX = move.isRightCastling ? 7 : 0;
-            rookTargetX = move.isRightCastling ? 5 : 3;
-            castleRook = (Rook) game.GetBoard()[initialY][rookInitX];
-            castleRook.MoveTo(rookTargetX, initialY, true);
-        }
-
-        // --- Special Simulation: En Passant ---
-        if (move.isEnPassant) {
-            game.GetBoard()[capturedPiece.GetYPos()][capturedPiece.GetXPos()] = null;
-        }
-
-        // 1. Simulate the move (Use true for isVirtual!)
-        movedPiece.MoveTo(targetX, targetY, true);
-
-        if (capturedPiece != null && !move.isEnPassant) {
-            game.GetBoard()[targetY][targetX] = null;
-        }
-
-        movedPiece.MoveTo(targetX, targetY, true);
-
-        // 2. Refresh the MockBoard AFTER the move is simulated
-        MockPiece[][] duplicate = DuplicateBoard(game);
-        King king = game.GetKing(isWhiteTurn);
-        boolean resultsInSelfCheck = IsKingThreatened(king, duplicate);
-
-        if (!resultsInSelfCheck) {
-            // Get all opponent pieces and check for any legal responses
-            ArrayList<ChessPiece> opponentPieces = game.GetPieces(!isWhiteTurn);
-            boolean opponentHasLegalMoves = false;
-
-            for (ChessPiece p : opponentPieces) {
-                // Ensure piece is still on board and has at least one valid move
-                if (game.GetBoard()[p.GetYPos()][p.GetXPos()] == p && !p.GetMoves().isEmpty()) {
-                    opponentHasLegalMoves = true;
-                    break;
-                }
-            }
-
-            if (!opponentHasLegalMoves) {
-                if (move.isCheckingOpponent) {
-                    move.isCheckmate = true; // No moves + In Check = MATE
-                } else {
-                    move.isStalemate = true;  // No moves + Not in Check = DRAW
-                }
-            }
-        }
-        // 3. RESTORE EVERYTHING
-        movedPiece.MoveTo(initialX, initialY, true);
-        //3.1 restore en passant
-        if (move.isEnPassant) {
-            // Put the en-passant victim back where it was
-            game.GetBoard()[capturedPiece.GetYPos()][capturedPiece.GetXPos()] = capturedPiece;
-            game.GetBoard()[targetY][targetX] = null; // target square was empty
-        } else {
-            game.GetBoard()[targetY][targetX] = capturedPiece;
-        }
-        //3.2 restore castling
-        if (castleRook != null) {
-            castleRook.MoveTo(rookInitX, initialY, true);
-        }
-
-        return !resultsInSelfCheck;
-    }
-
     static boolean IsKingThreatened(King king, MockPiece[][] duplicate){
         int kingX = king.GetXPos(), kingY = king.GetYPos();
         boolean isWhiteTurn = king.GetIsWhite();

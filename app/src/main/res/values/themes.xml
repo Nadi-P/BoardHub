@@ -13,4 +13,18 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <style name="BigDarkDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@color/chess_background_gray_dark</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textSize">30sp</item>
+        <item name="android:padding">4dp</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontWeight">800</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:layout_gravity">center</item>
+
+        <item name="colorAccent">@color/white</item>
+    </style>
 </resources>

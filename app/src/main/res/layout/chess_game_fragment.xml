@@ -2,14 +2,84 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/chess_background"
     xmlns:abdroid="http://schemas.android.com/tools">
+    <Button
+        android:id="@+id/btnReturn"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        app:backgroundTint="@null"
+        android:background="@drawable/chess_green_button_background"
+        android:text="Return"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@id/main_container"
+        app:layout_constraintStart_toStartOf="@id/main_container"
+        android:layout_margin="12dp"
+        android:visibility="gone"/>
+
     <LinearLayout
+        android:id="@+id/drawOfferPopup"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/chess_background"
+        android:visibility="gone"
+        android:gravity="center"
         android:padding="8dp"
-        android:gravity="center">
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@id/main_container">
+
+        <TextView
+            android:id="@+id/drawOfferText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textFontWeight="800"
+            android:textColor="@color/white"
+            android:fontFamily="@font/inter"
+            android:text="Accept Draw?"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp">
+
+            <Button
+                android:id="@+id/btnDeclineDrawOffer"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                app:backgroundTint="@null"
+                android:background="@drawable/chess_gray_button_background"
+                android:text="Decline"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:layout_marginRight="8dp"/>
+
+            <Button
+                android:id="@+id/btnAcceptDrawOffer"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                app:backgroundTint="@null"
+                android:background="@drawable/chess_green_button_background"
+                android:text="Accept"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/main_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:gravity="center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -145,87 +215,112 @@
 
     </LinearLayout>
 
-    <LinearLayout
+    <GridLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
+        android:columnCount="3"
+        android:rowCount="1"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:id="@+id/optionsSection"
+            android:layout_width="0dp"
+            android:clickable="true"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
             android:orientation="vertical"
-            android:gravity="center_horizontal"
+            android:gravity="center"
             android:paddingBottom="12dp">
 
-            <ImageButton
-                android:layout_width="50dp"
+            <ImageView
+                android:id="@+id/btnOptionsIcon"
+                android:layout_width="40dp"
                 android:layout_height="50dp"
                 android:scaleType="fitCenter"
+                android:padding="0dp"
+                app:tint="@color/chess_subtext_color"
                 android:layout_marginBottom="4dp"
                 android:src="@drawable/ic_bulleted_list"
-                android:backgroundTint="@android:color/transparent"
-                android:padding="0dp"/>
+                android:backgroundTint="@android:color/transparent"/>
 
             <TextView
+                android:id="@+id/btnOptionsText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/chess_subtext_color"
                 android:text="Options"
-                android:textSize="18dp"/>
+                android:textSize="16dp"
+                android:textFontWeight="600"
+                android:fontFamily="@font/inter"/>
         </LinearLayout>
 
+
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:id="@+id/backSection"
+            android:layout_width="0dp"
+            android:clickable="true"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
             android:orientation="vertical"
-            android:gravity="center_horizontal"
+            android:gravity="center"
             android:paddingBottom="12dp">
 
-            <ImageButton
-                android:layout_width="50dp"
+            <ImageView
+                android:id="@+id/btnBackIcon"
+                android:layout_width="40dp"
                 android:layout_height="50dp"
                 android:scaleType="fitCenter"
+                android:padding="0dp"
+                app:tint="@color/chess_subtext_color"
                 android:layout_marginBottom="4dp"
                 android:src="@drawable/ic_arrow_back"
-                android:backgroundTint="@android:color/transparent"
-                android:padding="0dp"/>
+                android:backgroundTint="@android:color/transparent"/>
+
             <TextView
+                android:id="@+id/btnBackText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/chess_subtext_color"
                 android:text="Back"
-                android:textSize="18dp"/>
+                android:textSize="16dp"
+                android:textFontWeight="600"
+                android:fontFamily="@font/inter"/>
         </LinearLayout>
 
+
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:id="@+id/forwardSection"
+            android:layout_width="0dp"
+            android:clickable="true"
+            android:layout_height="wrap_content"
+            android:layout_columnWeight="1"
             android:orientation="vertical"
-            android:gravity="center_horizontal"
+            android:gravity="center"
             android:paddingBottom="12dp">
 
-            <ImageButton
-                android:layout_width="50dp"
+            <ImageView
+                android:id="@+id/btnForwardIcon"
+                android:layout_width="40dp"
                 android:layout_height="50dp"
                 android:scaleType="fitCenter"
+                android:padding="0dp"
+                app:tint="@color/chess_subtext_color"
                 android:layout_marginBottom="4dp"
                 android:src="@drawable/ic_arrow_forward"
-                android:backgroundTint="@android:color/transparent"
-                android:padding="0dp"/>
+                android:backgroundTint="@android:color/transparent"/>
+
             <TextView
+                android:id="@+id/btnForwardText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/chess_subtext_color"
                 android:text="Forward"
-                android:textSize="18dp"/>
+                android:textSize="16dp"
+                android:textFontWeight="600"
+                android:fontFamily="@font/inter"/>
         </LinearLayout>
 
-
-
-    </LinearLayout>
-
+    </GridLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

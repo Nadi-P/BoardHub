@@ -116,10 +116,6 @@ public abstract class ChessDBI {
     public static void AddPlayerToGameQueue(int
             gameModeIndex, String preferredSide, OnMatchFoundListener listener) {
         String myUID = FirebaseAuth.getInstance().getUid();
-
-        System.out.println("Connected UID: " + myUID);
-        System.out.println(FirebaseAuth.getInstance().getCurrentUser());
-
         queueCollection
                 .whereEqualTo("gameModeIndex", gameModeIndex)
                 .orderBy("timestamp", Query.Direction.ASCENDING)
@@ -136,15 +132,11 @@ public abstract class ChessDBI {
                     }
 
                     if (match != null) {
-                        System.out.println("Attempting to join");
                         JoinExistingRequest(match, preferredSide, myUID, listener);
                     } else {
-                        System.out.println("Creating new Queue");
                         CreateNewRequest(gameModeIndex, preferredSide, myUID, listener);
                     }
                 }).addOnFailureListener(e -> {
-                    System.out.println("Error: " + e.getMessage());
-                    System.out.println("Attempt Failed Miserably");
                 });
     }
 
@@ -185,7 +177,6 @@ public abstract class ChessDBI {
         }).addOnSuccessListener(result -> {
             if (result != null) {
                 Object[] data = (Object[]) result;
-                System.out.println("Joined Game");
                 listener.onMatchFound((String) data[0], (boolean) data[1]);
             }
         });
@@ -199,7 +190,6 @@ public abstract class ChessDBI {
         request.put("status", "WAITING");
         request.put("timestamp", FieldValue.serverTimestamp());
 
-        System.out.println("Created New Game");
         queueCollection.document(myUID).set(request);
 
         queueCollection.document(myUID).addSnapshotListener((snapshot, e) -> {
