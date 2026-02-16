@@ -48,6 +48,8 @@ public class AuthLogin extends Fragment {
         TextView tvSignUp = v.findViewById(R.id.tvGoToSignUp);
 
         btnLogin.setOnClickListener(view -> {
+            ChessUI.AnimateButtonClickShrink(view, getContext());
+
             ChessDBI.AttemptLogin(etEmail, etPassword, (success, message) -> {
                 if (success) {
                     ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
@@ -58,6 +60,7 @@ public class AuthLogin extends Fragment {
         });
 
         tvSignUp.setOnClickListener(view -> {
+            ChessUI.AnimateButtonClickShrink(view, getContext());
             ChessUI.ReplaceChessScreen(new AuthSignup());
         });
 

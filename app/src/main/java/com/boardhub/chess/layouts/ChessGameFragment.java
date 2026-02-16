@@ -237,7 +237,9 @@ public class ChessGameFragment extends Fragment {
                 isViewingPreviousMove = false;
                 movePreviousIndex = game.GetMovesRecord().size()-1;
                 DisableForwardButton();
-                EnableBackButton();
+                if (moveInitialX != -1){
+                    EnableBackButton();
+                }
 
                 if (receivedMove.isCheckmate) HandleCheckmate();
                 else if (receivedMove.isStalemate) HandleStalemate();
@@ -255,6 +257,8 @@ public class ChessGameFragment extends Fragment {
             ExecuteMove(move);
         });
         optionsSection.setOnClickListener(v -> {
+            ChessUI.AnimateButtonClickShrink(v, getContext());
+
             String[] colors = {"Draw", "Resign"};
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.BigDarkDialog);
@@ -540,8 +544,7 @@ public class ChessGameFragment extends Fragment {
         return false;
     }
     private void HandleDrawOffer(ChessMove move) {
-        boolean isWhiteTurn = move.isWhiteTurn;
-        if (isWhiteTurn != isWhite) {
+        if (move.isWhiteTurn == isWhite) {
             drawOfferText.setTextColor(white);
             drawOfferText.setText("Draw Pending...");
             drawOfferAcceptButton.setVisibility(View.GONE);
@@ -598,13 +601,20 @@ public class ChessGameFragment extends Fragment {
                 isWIn,
                 gameOverReasonIndex,
                 game.GetMovesRecord().size(),
-                !game.IsWhiteTurn()
+                game.IsWhiteTurn()
         );
 
         Button btnReviewGame = popup.findViewById(R.id.btnReviewGame);
+        Button btnBackToMenu = popup.findViewById(R.id.btnReturnToMenu);
+
         btnReviewGame.setOnClickListener(v -> {
+            ChessUI.AnimateButtonClickShrink(v, getContext());
             popup.setVisibility(View.GONE);
             btnReturn.setVisibility(View.VISIBLE);
+        });
+        btnBackToMenu.setOnClickListener(v -> {
+            ChessUI.AnimateButtonClickShrink(v, getContext());
+            ChessUI.ReturnToPreviousScreen();
         });
 
         ((ViewGroup) screen).addView(popup);
@@ -684,6 +694,8 @@ public class ChessGameFragment extends Fragment {
         btnForwardText.setTextColor(ColorStateList.valueOf(ChessUI.disabledBackground));
     }
     private void EnableBackButton() {
+        ChessUI.AnimateButtonClickShrink(backSection, getContext());
+
         btnBackIcon.setImageTintList(ColorStateList.valueOf(ChessUI.subtextColor));
         btnBackText.setTextColor(ColorStateList.valueOf(ChessUI.subtextColor));
         backSection.setOnClickListener(v -> {
@@ -703,6 +715,8 @@ public class ChessGameFragment extends Fragment {
         });
     }
     private void EnableForwardButton() {
+        ChessUI.AnimateButtonClickShrink(forwardSection, getContext());
+
         // FIX: Set colors for FORWARD icons, not back icons
         btnForwardIcon.setImageTintList(ColorStateList.valueOf(ChessUI.subtextColor));
         btnForwardText.setTextColor(ColorStateList.valueOf(ChessUI.subtextColor));

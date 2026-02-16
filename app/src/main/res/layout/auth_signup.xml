@@ -3,7 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/chess_background"
     android:padding="24dp">
 
     <ImageView
@@ -31,45 +30,31 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="16dp"/>
 
-
     <EditText
         android:id="@+id/etEmail"
+        style="@style/ChessEditText"
         android:layout_width="match_parent"
         android:layout_height="55dp"
-        android:layout_marginTop="32dp"
-        android:background="@null"
         android:hint="Email"
         android:inputType="textEmailAddress"
-        android:paddingStart="20dp"
-        android:textColor="@color/white"
-        android:textColorHint="@color/chess_subtext_color"
-        app:layout_constraintTop_toBottomOf="@id/tvTitle" />
+        app:layout_constraintTop_toBottomOf="@id/etUsername" />
 
     <EditText
-        android:id="@+id/etPhone"
+        android:id="@+id/etUsername"
+        style="@style/ChessEditText"
         android:layout_width="match_parent"
         android:layout_height="55dp"
-        android:layout_marginTop="12dp"
-        android:background="@null"
-        android:hint="Phone"
-        android:inputType="phone"
-        android:paddingStart="20dp"
-        android:textColor="@color/white"
-        android:textColorHint="@color/chess_subtext_color"
-        app:layout_constraintTop_toBottomOf="@id/etEmail" />
+        android:hint="Username"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle" />
 
     <EditText
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
         android:layout_height="55dp"
-        android:layout_marginTop="12dp"
-        android:background="@null"
-        android:hint="Password"
         android:inputType="textPassword"
-        android:paddingStart="20dp"
-        android:textColor="@color/white"
-        android:textColorHint="@color/chess_subtext_color"
-        app:layout_constraintTop_toBottomOf="@id/etPhone" />
+        android:hint="Password"
+        style="@style/ChessEditText"
+        app:layout_constraintTop_toBottomOf="@id/etEmail" />
 
     <Button
         android:id="@+id/btnSignup"

@@ -2,7 +2,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#262421">
+    android:background="@drawable/chess_background_with_picture">
 
     <FrameLayout
         android:id="@+id/fragment_container"

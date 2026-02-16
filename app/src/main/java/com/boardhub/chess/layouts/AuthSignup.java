@@ -43,11 +43,13 @@ public class AuthSignup extends Fragment {
 
         EditText etEmail = v.findViewById(R.id.etEmail);
         EditText etPassword = v.findViewById(R.id.etPassword);
-        EditText etPhone = v.findViewById(R.id.etPhone);
+        EditText etUsername = v.findViewById(R.id.etUsername);
         Button btnSignUp = v.findViewById(R.id.btnSignup);
         TextView tvLogin = v.findViewById(R.id.tvGoToSignUp);
 
         btnSignUp.setOnClickListener(view -> {
+            ChessUI.AnimateButtonClickShrink(view, getContext());
+
             ChessDBI.AttemptSignUp(etEmail, etPassword, (success, message) -> {
                 if (success) {
                     Toast.makeText(getContext(), "Account Created!", Toast.LENGTH_SHORT).show();
@@ -59,7 +61,8 @@ public class AuthSignup extends Fragment {
         });
 
         tvLogin.setOnClickListener(view -> {
-            ChessUI.ReplaceChessScreen(new AuthLogin());
+            ChessUI.AnimateButtonClickShrink(view, getContext());
+            ChessUI.ReturnToPreviousScreen();
         });
 
         return v;

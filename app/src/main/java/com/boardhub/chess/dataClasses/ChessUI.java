@@ -1,10 +1,18 @@
 package com.boardhub.chess.dataClasses;
 
 // IMPORTANT: Use the androidx version, not android.app
+import static java.security.AccessController.getContext;
+
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
+import android.animation.ArgbEvaluator;
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -52,19 +60,27 @@ public abstract class ChessUI {
         promotionMenuBackground = ContextCompat.getColor(context, R.color.chess_promotion_menu_background);
     }
 
-    public static void ReplaceChessScreen(Fragment fragment){
-        if (chessFragmentManager == null) return; // Prevent NullPointerException
+    public static void ReplaceChessScreen(Fragment fragment) {
+        if (chessFragmentManager == null) return;
 
         chessFragmentManager.beginTransaction()
+                .setCustomAnimations(
+                        R.anim.slide_in_left,   // enter: new fragment slides in from right
+                        R.anim.slide_out_left,  // exit: current fragment slides out to left
+                        R.anim.slide_in_right,  // popEnter: previous fragment slides in from left
+                        R.anim.slide_out_right  // popExit: current fragment slides out to right
+                )
                 .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
                 .commit();
     }
 
-    public static void ReturnToPreviousScreen(){
-        if (chessFragmentManager == null) return; // Prevent NullPointerException
+    public static void ReturnToPreviousScreen() {
+        if (chessFragmentManager == null) return;
         chessFragmentManager.popBackStack();
-    }    public static View CreateSChessGameOverPopup(
+    }
+
+    public static View CreateSChessGameOverPopup(
             LayoutInflater inflater, ViewGroup container,
             boolean isWin, int gameOverReasonIndex, int movesCount, boolean isWhiteWin){
         View popupWindow = inflater.inflate(R.layout.chess_gameover_popup, container, false);
@@ -104,14 +120,11 @@ public abstract class ChessUI {
 
         tvMoveCount.setText(String.valueOf(movesCount));
 
-        btnReviewGame.setOnClickListener(v -> {
-            popupWindow.setVisibility(View.GONE);
-        });
-        btnMainMenu.setOnClickListener(v -> {
-            popupWindow.setVisibility(View.GONE);
-            ReturnToPreviousScreen();
-        });
-
         return popupWindow;
+    }
+
+    public static void AnimateButtonClickShrink(View view, Context context) {
+        Animation shrink = AnimationUtils.loadAnimation(context, R.anim.click_shrink);
+        view.startAnimation(shrink);
     }
 }

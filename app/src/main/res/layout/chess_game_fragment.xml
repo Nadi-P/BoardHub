@@ -2,7 +2,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@drawable/chess_background"
     xmlns:abdroid="http://schemas.android.com/tools">
     <Button
         android:id="@+id/btnReturn"

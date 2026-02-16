@@ -9,6 +9,8 @@ import android.view.LayoutInflater;
 import android.view.PointerIcon;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -98,6 +100,8 @@ public class ChessStartGameMenu extends Fragment {
 
     private void setupListeners(View root) {
         btnStartGame.setOnClickListener(v -> {
+            ChessUI.AnimateButtonClickShrink(v, getContext());
+
             int timeInMillis = durations[currentModeIndex] * 60 * 1000;
             if (isSingleplayer) {
                 ChessGame game = new ChessGame("UID", true, timeInMillis);
@@ -117,6 +121,8 @@ public class ChessStartGameMenu extends Fragment {
         });
 
         btnSelectMode.setOnClickListener(v -> {
+            ChessUI.AnimateButtonClickShrink(v, getContext());
+
             currentModeIndex = (currentModeIndex - 1 + modes.length) % modes.length;
             btnSelectMode.setText(modes[currentModeIndex]);
         });
@@ -126,6 +132,8 @@ public class ChessStartGameMenu extends Fragment {
 
     private void setupColorSelectors() {
         View.OnClickListener colorListener = v -> {
+            ChessUI.AnimateButtonClickShrink(v, getContext());
+
             // Reset all backgrounds to null
             frameBlack.setBackground(null);
             frameRandom.setBackground(null);
