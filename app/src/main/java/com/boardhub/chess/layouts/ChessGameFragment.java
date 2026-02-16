@@ -541,7 +541,7 @@ public class ChessGameFragment extends Fragment {
     }
     private void HandleDrawOffer(ChessMove move) {
         boolean isWhiteTurn = move.isWhiteTurn;
-        if (isWhiteTurn == isWhite) {
+        if (isWhiteTurn != isWhite) {
             drawOfferText.setTextColor(white);
             drawOfferText.setText("Draw Pending...");
             drawOfferAcceptButton.setVisibility(View.GONE);
@@ -567,6 +567,8 @@ public class ChessGameFragment extends Fragment {
     }
     private void HandleAgreedDraw() {
         HandleEndGame(false, 1);
+        drawOfferPopup.setVisibility(View.GONE);
+
     }
     private void HandleRepetition() {
         HandleEndGame(false, 2);
@@ -596,7 +598,7 @@ public class ChessGameFragment extends Fragment {
                 isWIn,
                 gameOverReasonIndex,
                 game.GetMovesRecord().size(),
-                game.IsWhiteTurn()
+                !game.IsWhiteTurn()
         );
 
         Button btnReviewGame = popup.findViewById(R.id.btnReviewGame);
@@ -757,20 +759,35 @@ public class ChessGameFragment extends Fragment {
             String fen = game.GetInitialFEN();
             for (int row = 0; row < 8; row++) {
                 for (int col = 0; col < 8; col++) {
-                    // 1. Calculate the FEN index (Row 0 is Rank 8)
-                    int fenIndex = row * 8 + col;
+                    // 1. Get Logical Coordinates based on perspective
+                    int logicX = isWhite ? col : 7 - col;
+                    int logicY = isWhite ? 7 - row : row;
+
+                    // 2. Map Logical Coordinates to FEN Index (Top-Down: Rank 8 to 1)
+                    int fenRow = 7 - logicY;
+                    int fenCol = logicX;
+                    int fenIndex = fenRow * 8 + fenCol;
+
                     String pieceChar = String.valueOf(fen.charAt(fenIndex));
 
+                    // 3. Update UI
                     ImageButton square = boardSquares[row][col];
-                    int pieceIcon = ChessLogic.Constants.FENtoIconMap.get(pieceChar);
-                    square.setImageResource(pieceIcon);
 
+                    // Safe lookup to avoid NullPointerException
+                    Integer icon = ChessLogic.Constants.FENtoIconMap.get(pieceChar);
+                    int pieceIcon = (icon != null) ? icon : 0;
+
+                    if (pieceIcon != 0) {
+                        square.setImageResource(pieceIcon);
+                    } else {
+                        square.setImageDrawable(null);
+                    }
+
+                    // 4. Reset colors to normal (no highlights for the starting position)
                     boolean isLight = (row + col) % 2 == 0;
                     square.setBackgroundColor(isLight ? lightNormal : darkNormal);
                 }
             }
-
         }
     }
-
 }

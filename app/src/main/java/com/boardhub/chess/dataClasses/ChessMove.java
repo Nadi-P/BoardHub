@@ -145,10 +145,10 @@ public class ChessMove {
         Map<String, Object> packet = new HashMap<>();
 
         packet.put("gameUID", game.GetUID());
-        packet.put("movedPieceFEN", movedPiece.GetFENid());
+        packet.put("movedPieceFEN", (movedPiece != null) ? movedPiece.GetFENid() : null);
         packet.put("targetPieceFEN", (capturedPiece != null) ? capturedPiece.GetFENid() : null);
-        packet.put("xInitial", movedPiece.GetXPos());
-        packet.put("yInitial", movedPiece.GetYPos());
+        packet.put("xInitial", initialX);
+        packet.put("yInitial", initialY);
         packet.put("xTarget", targetX);
         packet.put("yTarget", targetY);
         packet.put("whiteTime", game.GetTime(true));
