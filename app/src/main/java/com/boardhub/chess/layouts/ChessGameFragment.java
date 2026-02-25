@@ -353,6 +353,7 @@ public class ChessGameFragment extends Fragment {
             ExecuteMove(drawMove);
         } else if (selection == "Resign") {
             ChessMove resignMove = new ChessMove(game, 3);
+            resignMove.isWhiteTurn = isWhite;
             ExecuteMove(resignMove);
         }
         else {
@@ -616,7 +617,7 @@ public class ChessGameFragment extends Fragment {
         HandleEndGame(true, 0, true);
     }
     private void HandleResignation() {
-        HandleEndGame(true, 2, false);
+        HandleEndGame(true, 2, true);
     }
     private void HandleOutOfTime() {
         HandleEndGame(true, 1, true);
