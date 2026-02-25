@@ -165,8 +165,8 @@ public class ChessGameFragment extends Fragment {
             opponentName.setText("Black Player");
         }
         else {
-            playerName.setText(player.GetUsername());
-            opponentName.setText(opponent.GetUsername());
+            playerName.setText(player.getUsername());
+            opponentName.setText(opponent.getUsername());
         }
 
         int padding = promotionMenuPadding;

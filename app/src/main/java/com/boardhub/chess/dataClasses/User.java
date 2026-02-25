@@ -27,22 +27,16 @@ public class User {
         this.chessDraws = 0;
     }
 
-    public String GetUID(){
-        return this.UID;
-    }
-    public String GetUsername(){
-        return this.username;
-    }
-    public String GetPassword(){
-        return this.password;
-    }
-    public long GetChessWins(){
+    public String getUid() { return UID; }
+    public String getUsername() { return username; }
+    public String getPassword() { return password; }
+    public long getChessWins(){
         return this.chessWins;
     }
-    public long GetChessLosses(){
+    public long getChessLosses(){
         return this.chessLosses;
     }
-    public long GetChessDraws(){
+    public long getChessDraws(){
         return this.chessDraws;
     }
 
