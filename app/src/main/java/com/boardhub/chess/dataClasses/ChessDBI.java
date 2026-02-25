@@ -221,7 +221,17 @@ public abstract class ChessDBI {
         }
     }
 
-    public static User GetUserWithUID(String uid) {
-        return usersCollection.document(uid).get().getResult().toObject(User.class);
+    public static void GetUserWithUID(String uid, UserCallback callback) {
+        usersCollection.document(uid).get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                User user = documentSnapshot.toObject(User.class);
+                callback.onCallback(user); // Send the user back via interface
+            }
+        });
+    }
+
+    // Define this interface in your class
+    public interface UserCallback {
+        void onCallback(User user);
     }
 }

@@ -41,6 +41,8 @@ public class ChessGame implements Serializable {
                      String playerUID, String opponentUID, int modeIndex){
         this.UID = gameUID;
         this.assignedIsWhite = assignedIsWhite;
+        this.playerUID = playerUID;
+        this.opponentUID = opponentUID;
 
         this.isWhiteTurn = true;
 

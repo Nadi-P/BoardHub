@@ -100,8 +100,6 @@ public class ChessGameFragment extends Fragment {
             game = (ChessGame) getArguments().getSerializable("game");
             isWhite = game.GetAssignedIsWhite();
             isSingleplayer = (boolean) getArguments().getSerializable("isSingleplayer");
-            player = ChessDBI.GetUserWithUID(game.GetPlayerUID(true));
-            opponent = ChessDBI.GetUserWithUID(game.GetPlayerUID(true));
         }
     }
 
@@ -165,8 +163,17 @@ public class ChessGameFragment extends Fragment {
             opponentName.setText("Black Player");
         }
         else {
-            playerName.setText(player.getUsername());
-            opponentName.setText(opponent.getUsername());
+            ChessDBI.GetUserWithUID(game.GetPlayerUID(true), player -> {
+                this.player = player; // Store the result
+
+                // Once White is fetched, fetch the Black player
+                ChessDBI.GetUserWithUID(game.GetPlayerUID(false), opponent -> {
+                    this.opponent = opponent; // Store the result
+
+                    // NOW both are ready, update the UI labels
+                    UpdateScoreboardNames();
+                });
+            });
         }
 
         int padding = promotionMenuPadding;
@@ -536,6 +543,13 @@ public class ChessGameFragment extends Fragment {
         int minutes = seconds / 60;
         seconds = seconds % 60;
         tv.setText(String.format("%02d:%02d", minutes, seconds));
+    }
+    private void UpdateScoreboardNames() {
+        if (player != null && opponent != null) {
+            // Assuming whitePlayerLabel and blackPlayerLabel are your TextViews
+            playerName.setText(player.getUsername());
+            opponentName.setText(opponent.getUsername());
+        }
     }
 
     // --- Game Ends ---
