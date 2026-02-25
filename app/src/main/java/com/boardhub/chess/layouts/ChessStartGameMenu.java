@@ -108,7 +108,7 @@ public class ChessStartGameMenu extends Fragment {
 
             int timeInMillis = durations[currentModeIndex] * 60 * 1000;
             if (isSingleplayer) {
-                ChessGame game = new ChessGame("UID", true, timeInMillis);
+                ChessGame game = new ChessGame("UID", true, "", "", timeInMillis);
                 ChessGameFragment fragment = ChessGameFragment.newInstance(game, isSingleplayer);
                 ChessUI.ReplaceChessScreen(fragment);
             }
