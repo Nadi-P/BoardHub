@@ -50,14 +50,11 @@ public class AuthSignup extends Fragment {
         btnSignUp.setOnClickListener(view -> {
             ChessUI.AnimateButtonClickShrink(view, getContext());
 
-            ChessDBI.AttemptSignUp(etEmail, etPassword, (success, message) -> {
-                if (success) {
-                    Toast.makeText(getContext(), "Account Created!", Toast.LENGTH_SHORT).show();
-                    ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
-                } else {
-                    Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-                }
-            });
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
+            String username = etUsername.getText().toString().trim();
+
+            ChessDBI.AttemptSignup(email, password, username, getContext());
         });
 
         tvLogin.setOnClickListener(view -> {

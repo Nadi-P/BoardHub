@@ -1,8 +1,12 @@
 package com.boardhub.chess.dataClasses;
 
+import android.content.Context;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import com.boardhub.chess.layouts.ChessActivity;
 import com.boardhub.chess.layouts.ChessGameFragment;
+import com.boardhub.chess.layouts.ChessStartGameMenu;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -21,6 +25,11 @@ public abstract class ChessDBI {
     private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private static final FirebaseAuth mAuth = FirebaseAuth.getInstance();
 
+
+    public static User currentUser;
+
+    private static final CollectionReference usersCollection =
+            db.collection("users");
     private static final CollectionReference gamesCollection =
             db.collection("chessGames");
     private static final CollectionReference queueCollection =
@@ -31,45 +40,47 @@ public abstract class ChessDBI {
     }
     // -- login and sign up ---
 
-    public interface AuthCallback {
-        void onResult(boolean success, String message);
-    }
-
-    public static void AttemptLogin(EditText etEmail, EditText etPassword, AuthCallback callback) {
-        String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
-
-        if (email.isEmpty() || password.isEmpty()) {
-            callback.onResult(false, "Please fill all fields");
-            return;
-        }
-
-        mAuth.signInWithEmailAndPassword(email, password)
+    public static void AttemptLogin(String email, String password, Context context) {
+        FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        callback.onResult(true, "Login Successful");
+                        String uid = task.getResult().getUser().getUid();
+
+                        // Fetch the user data from Firestore
+                        FirebaseFirestore.getInstance().collection("users")
+                                .document(uid)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    if (documentSnapshot.exists()) {
+                                        // Map the document back to your User class
+                                        User loggedInUser = documentSnapshot.toObject(User.class);
+                                        ChessDBI.currentUser = loggedInUser;
+                                        ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
+                                    }
+                                });
                     } else {
-                        callback.onResult(false, "Login Failed: " + task.getException().getMessage());
+                        Toast.makeText(context, "Login Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
-
-    public static void AttemptSignUp(EditText etEmail, EditText etPassword, AuthCallback callback) {
-        String email = etEmail.getText().toString().trim();
-        String password = etPassword.getText().toString().trim();
-
-        // Basic Validation
-        if (email.isEmpty() || password.length() < 6) {
-            callback.onResult(false, "Email empty or password too short (min 6 chars)");
-            return;
-        }
-
-        mAuth.createUserWithEmailAndPassword(email, password)
+    public static void AttemptSignup(String email, String password, String username, Context context) {
+        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        callback.onResult(true, "Registration Successful");
+                        String uid = task.getResult().getUser().getUid();
+
+                        User newUser = new User(uid, username, password);
+
+                        // Save to Firestore under "users" collection
+                        FirebaseFirestore.getInstance().collection("users")
+                                .document(uid)
+                                .set(newUser)
+                                .addOnSuccessListener(aVoid -> {
+                                    ChessDBI.currentUser = newUser;
+                                    ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
+                                });
                     } else {
-                        callback.onResult(false, "Registration Failed: " + task.getException().getMessage());
+                        Toast.makeText(context, "Signup Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
@@ -92,7 +103,6 @@ public abstract class ChessDBI {
 
         gamesCollection.document(game.GetUID()).set(packet);
     }
-
     public static void SaveMove(ChessMove move) {
         if (move.game == null) return;
         move.whiteTime = move.game.GetTime(true);
@@ -105,11 +115,10 @@ public abstract class ChessDBI {
     // --- Handle Queueing ---
 
     public interface OnMatchFoundListener {
-        void onMatchFound(String gameUID, boolean isWhite);
+        void onMatchFound(String gameUID, boolean isWhite, String userUID, String opponentUID);
     }
-
     public static void AddPlayerToGameQueue(int
-            gameModeIndex, String preferredSide, OnMatchFoundListener listener) {
+                                                    gameModeIndex, String preferredSide, OnMatchFoundListener listener) {
         String myUID = FirebaseAuth.getInstance().getUid();
         queueCollection
                 .whereEqualTo("gameModeIndex", gameModeIndex)
@@ -134,7 +143,6 @@ public abstract class ChessDBI {
                 }).addOnFailureListener(e -> {
                 });
     }
-
     private static void JoinExistingRequest(
             DocumentSnapshot matchDoc, String mySide, String myUID, OnMatchFoundListener listener) {
         db.runTransaction(transaction -> {
@@ -162,21 +170,22 @@ public abstract class ChessDBI {
                 transaction.set(gamesCollection.document(gameUID), gameData);
 
                 // Notify Creator via their queue doc
+                // Inside JoinExistingRequest transaction
                 transaction.update(matchDoc.getReference(), "status", "MATCHED");
                 transaction.update(matchDoc.getReference(), "gameUID", gameUID);
                 transaction.update(matchDoc.getReference(), "creatorIsWhite", creatorIsWhite);
+                transaction.update(matchDoc.getReference(), "opponentUID", myUID); // Add this line!
 
-                return new Object[]{gameUID, !creatorIsWhite}; // Joiner's result
+                return new Object[]{gameUID, !creatorIsWhite, myUID, matchDoc.getId()}; // Joiner's result
             }
             return null;
         }).addOnSuccessListener(result -> {
             if (result != null) {
                 Object[] data = (Object[]) result;
-                listener.onMatchFound((String) data[0], (boolean) data[1]);
+                listener.onMatchFound((String) data[0], (boolean) data[1], (String) data[2], (String) data[3]);
             }
         });
     }
-
     private static void CreateNewRequest(
             int modeIndex, String side, String myUID, OnMatchFoundListener listener) {
         Map<String, Object> request = new HashMap<>();
@@ -191,12 +200,13 @@ public abstract class ChessDBI {
             if (snapshot != null && "MATCHED".equals(snapshot.getString("status"))) {
                 String gameUID = snapshot.getString("gameUID");
                 boolean isWhite = snapshot.getBoolean("creatorIsWhite");
-                listener.onMatchFound(gameUID, isWhite);
+                String opponentUID = snapshot.getString("opponentUID"); // Get the UID here
+
+                listener.onMatchFound(gameUID, isWhite, myUID, opponentUID); // Pass it to listener
                 snapshot.getReference().delete();
             }
         });
     }
-
     private static boolean isCompatible(
             String mySide, String opponentSide) {
         if (mySide.equals("RANDOM") || opponentSide.equals("RANDOM")) return true;
@@ -204,11 +214,14 @@ public abstract class ChessDBI {
         if (mySide.equals("BLACK") && opponentSide.equals("WHITE")) return true;
         return false;
     }
-
     public static void RemovePlayerFromGameQueue() {
         String myUID = FirebaseAuth.getInstance().getUid();
         if (myUID != null) {
             queueCollection.document(myUID).delete();
         }
+    }
+
+    public static User GetUserWithUID(String uid) {
+        return usersCollection.document(uid).get().getResult().toObject(User.class);
     }
 }

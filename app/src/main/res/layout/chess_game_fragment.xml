@@ -101,6 +101,7 @@
                 android:layout_marginStart="10dp">
 
                 <TextView
+                    android:id="@+id/tvOpponentName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Opponent_Name"
@@ -184,6 +185,7 @@
                 android:layout_marginStart="10dp">
 
                 <TextView
+                    android:id="@+id/tvPlayerName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Your_Name"

@@ -48,7 +48,9 @@ public class ChessGameFragment extends Fragment {
             btnOptionsText,
             btnBackText,
             btnForwardText,
-            drawOfferText;
+            drawOfferText,
+            playerName,
+            opponentName;
 
     private GridLayout promotionsMenu, chessGrid;
     private ImageButton promotionOptionQueen,
@@ -72,6 +74,7 @@ public class ChessGameFragment extends Fragment {
 
     // logic
     private ChessGame game;
+    private User player, opponent;
     private ChessPiece selectedPiece = null;
     private ArrayList<ChessMove> activeMoves = new ArrayList<>();
     private boolean isWhite;
@@ -97,6 +100,8 @@ public class ChessGameFragment extends Fragment {
             game = (ChessGame) getArguments().getSerializable("game");
             isWhite = game.GetAssignedIsWhite();
             isSingleplayer = (boolean) getArguments().getSerializable("isSingleplayer");
+            player = ChessDBI.GetUserWithUID(game.GetPlayerUID(true));
+            opponent = ChessDBI.GetUserWithUID(game.GetPlayerUID(true));
         }
     }
 
@@ -121,11 +126,15 @@ public class ChessGameFragment extends Fragment {
     private void InitializeViews(View rootView){
         inflater = LayoutInflater.from(getContext());
         chessGrid = rootView.findViewById(R.id.chess_grid);
-        playerCapturedPiecesTextView = rootView.findViewById(R.id.playerCapturedPiecesTextView);
-        opponentCapturedPiecesTextView = rootView.findViewById(R.id.opponentCapturedPiecesTextView);
         promotionsMenu = rootView.findViewById(R.id.promotionsMenu_grid);
+
         playerTimeTextView = rootView.findViewById(R.id.playerTimeView);
+        playerName = rootView.findViewById(R.id.tvPlayerName);
+        playerCapturedPiecesTextView = rootView.findViewById(R.id.playerCapturedPiecesTextView);
+
+        opponentName = rootView.findViewById(R.id.tvOpponentName);
         opponentTimeTextView = rootView.findViewById(R.id.opponentTimeView);
+        opponentCapturedPiecesTextView = rootView.findViewById(R.id.opponentCapturedPiecesTextView);
 
         optionsSection = rootView.findViewById(R.id.optionsSection);
         btnOptionsIcon = rootView.findViewById(R.id.btnOptionsIcon);
@@ -150,6 +159,16 @@ public class ChessGameFragment extends Fragment {
     }
     private void InitializeBoard() {
         chessGrid.removeAllViews();
+
+        if (isSingleplayer) {
+            playerName.setText("White Player");
+            opponentName.setText("Black Player");
+        }
+        else {
+            playerName.setText(player.GetUsername());
+            opponentName.setText(opponent.GetUsername());
+        }
+
         int padding = promotionMenuPadding;
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
@@ -566,29 +585,29 @@ public class ChessGameFragment extends Fragment {
         drawOfferPopup.setVisibility(View.GONE);
     }
     private void HandleDraw() {
-        HandleEndGame(false, 0);
+        HandleEndGame(false, 0, true);
     }
     private void HandleAgreedDraw() {
-        HandleEndGame(false, 1);
+        HandleEndGame(false, 1, true);
         drawOfferPopup.setVisibility(View.GONE);
 
     }
     private void HandleRepetition() {
-        HandleEndGame(false, 2);
+        HandleEndGame(false, 2, true);
     }
     private void HandleStalemate() {
-        HandleEndGame(false, 3);
+        HandleEndGame(false, 3, true);
     }
     private void HandleCheckmate() {
-        HandleEndGame(true, 0);
+        HandleEndGame(true, 0, true);
     }
     private void HandleResignation() {
-        HandleEndGame(true, 2);
+        HandleEndGame(true, 2, false);
     }
     private void HandleOutOfTime() {
-        HandleEndGame(true, 1);
+        HandleEndGame(true, 1, true);
     }
-    private void HandleEndGame(boolean isWIn, int gameOverReasonIndex) {
+    private void HandleEndGame(boolean isWIn, int gameOverReasonIndex, boolean isWhiteMoveDependant) {
         StopTimers();
         isGameOver = true;
         gameListener = null;
@@ -601,7 +620,7 @@ public class ChessGameFragment extends Fragment {
                 isWIn,
                 gameOverReasonIndex,
                 game.GetMovesRecord().size(),
-                game.IsWhiteTurn()
+                (isWhiteMoveDependant) ? game.IsWhiteTurn() : isWhite
         );
 
         Button btnReviewGame = popup.findViewById(R.id.btnReviewGame);

@@ -13,6 +13,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.boardhub.R;
@@ -37,6 +38,7 @@ public class ChessStartGameMenu extends Fragment {
     private String selectedColor = "RANDOM";
 
     private Button btnSelectMode, btnStartGame;
+    ImageButton btnLogout, btnProfile;
     private FrameLayout frameBlack, frameRandom, frameWhite;
     private TextView tvQueueing;
 
@@ -78,6 +80,8 @@ public class ChessStartGameMenu extends Fragment {
         frameRandom = root.findViewById(R.id.select_side_random);
         frameWhite = root.findViewById(R.id.select_side_white);
         tvQueueing = root.findViewById(R.id.queueing_tv);
+        btnLogout = root.findViewById(R.id.btnLogout);
+        btnProfile = root.findViewById(R.id.btnProfile);
 
         btnSelectMode.setText(modes[currentModeIndex]);
         tvQueueing.setVisibility(View.INVISIBLE);
@@ -127,6 +131,14 @@ public class ChessStartGameMenu extends Fragment {
             btnSelectMode.setText(modes[currentModeIndex]);
         });
 
+        btnLogout.setOnClickListener(v -> {
+            ChessUI.ReturnToPreviousScreen();
+        });
+
+        btnProfile.setOnClickListener(v -> {
+
+        });
+
         setupColorSelectors();
     }
 
@@ -163,9 +175,9 @@ public class ChessStartGameMenu extends Fragment {
 
         timerHandler.post(timerRunnable);
 
-        ChessDBI.AddPlayerToGameQueue(currentModeIndex, selectedColor, (gameUID, isWhite) -> {
+        ChessDBI.AddPlayerToGameQueue(currentModeIndex, selectedColor, (gameUID, isWhite, userUID, opponentUID) -> {
             endQueueing();
-            ChessGame game = new ChessGame(gameUID, isWhite, currentModeIndex);
+            ChessGame game = new ChessGame(gameUID, isWhite, userUID, opponentUID, currentModeIndex);
             ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game, false));
         });
     }

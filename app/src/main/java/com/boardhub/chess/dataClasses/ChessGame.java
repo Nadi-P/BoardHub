@@ -16,6 +16,9 @@ import java.util.UUID;
 public class ChessGame implements Serializable {
     private String UID, initialFen;
     boolean assignedIsWhite;
+    String playerUID;
+    String opponentUID;
+
 
     final private ChessPiece[][] board = new ChessPiece[8][8];
     private boolean isWhiteTurn;
@@ -34,7 +37,8 @@ public class ChessGame implements Serializable {
     King blackKing;
 
     //new game of chess
-    public ChessGame(String gameUID, boolean assignedIsWhite, int modeIndex){
+    public ChessGame(String gameUID, boolean assignedIsWhite,
+                     String playerUID, String opponentUID, int modeIndex){
         this.UID = gameUID;
         this.assignedIsWhite = assignedIsWhite;
 
@@ -99,6 +103,7 @@ public class ChessGame implements Serializable {
         ChessDBI.SaveGame(this);
     }
 
+
     public String GetUID() {
         return UID;
     }
@@ -110,6 +115,7 @@ public class ChessGame implements Serializable {
     }
     public boolean IsWhiteTurn() {return isWhiteTurn; }
     public King GetKing(boolean forWhite) { return (forWhite) ? whiteKing : blackKing; }
+    public String GetPlayerUID(boolean forUser) { return (forUser) ? playerUID : opponentUID; }
     public long GetTime(boolean forWhite) { return (forWhite) ? whiteTime : blackTime; }
     public ArrayList<ChessPiece> GetPieces(boolean forWhite) { return (forWhite) ? whitePieces : blackPieces; }
     public ArrayList<ChessMove> GetMovesRecord() {return this.movesRecord; }

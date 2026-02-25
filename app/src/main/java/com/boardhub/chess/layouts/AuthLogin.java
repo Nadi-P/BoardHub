@@ -47,16 +47,14 @@ public class AuthLogin extends Fragment {
         Button btnLogin = v.findViewById(R.id.btnLogin);
         TextView tvSignUp = v.findViewById(R.id.tvGoToSignUp);
 
+
         btnLogin.setOnClickListener(view -> {
             ChessUI.AnimateButtonClickShrink(view, getContext());
 
-            ChessDBI.AttemptLogin(etEmail, etPassword, (success, message) -> {
-                if (success) {
-                    ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
-                } else {
-                    Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-                }
-            });
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
+
+            ChessDBI.AttemptLogin(email, password, getContext());
         });
 
         tvSignUp.setOnClickListener(view -> {
