@@ -84,12 +84,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:padding="8dp"
             android:layout_marginBottom="24dp">
 
             <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:id="@+id/opponentAvatar"
+                android:scaleType="centerCrop"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:background="@color/chess_timer_disabled_background"
                 android:contentDescription="Opponent Avatar" />
 
@@ -105,6 +108,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Opponent_Name"
+                    android:textSize="16sp"
                     android:textColor="#FFFFFF"
                     android:textStyle="bold" />
 
@@ -168,12 +172,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:padding="8dp"
             android:layout_marginTop="24dp">
 
             <ImageView
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:id="@+id/playerAvatar"
+                android:scaleType="centerCrop"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:background="@color/chess_timer_disabled_background"
                 android:contentDescription="User Avatar" />
 
@@ -189,6 +196,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Your_Name"
+                    android:textSize="16sp"
                     android:textColor="#FFFFFF"
                     android:textStyle="bold" />
 
@@ -221,7 +229,8 @@
         android:layout_height="wrap_content"
         android:columnCount="3"
         android:rowCount="1"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:padding="4dp">
 
         <LinearLayout
             android:id="@+id/optionsSection"
@@ -231,12 +240,12 @@
             android:layout_columnWeight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:paddingBottom="12dp">
+>
 
             <ImageView
                 android:id="@+id/btnOptionsIcon"
-                android:layout_width="40dp"
-                android:layout_height="50dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:scaleType="fitCenter"
                 android:padding="0dp"
                 app:tint="@color/chess_subtext_color"
@@ -250,7 +259,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/chess_subtext_color"
                 android:text="Options"
-                android:textSize="16dp"
+                android:textSize="14dp"
                 android:textFontWeight="600"
                 android:fontFamily="@font/inter"/>
         </LinearLayout>
@@ -263,13 +272,12 @@
             android:layout_height="wrap_content"
             android:layout_columnWeight="1"
             android:orientation="vertical"
-            android:gravity="center"
-            android:paddingBottom="12dp">
+            android:gravity="center">
 
             <ImageView
                 android:id="@+id/btnBackIcon"
-                android:layout_width="40dp"
-                android:layout_height="50dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:scaleType="fitCenter"
                 android:padding="0dp"
                 app:tint="@color/chess_subtext_color"
@@ -283,7 +291,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/chess_subtext_color"
                 android:text="Back"
-                android:textSize="16dp"
+                android:textSize="14dp"
                 android:textFontWeight="600"
                 android:fontFamily="@font/inter"/>
         </LinearLayout>
@@ -296,13 +304,12 @@
             android:layout_height="wrap_content"
             android:layout_columnWeight="1"
             android:orientation="vertical"
-            android:gravity="center"
-            android:paddingBottom="12dp">
+            android:gravity="center">
 
             <ImageView
                 android:id="@+id/btnForwardIcon"
-                android:layout_width="40dp"
-                android:layout_height="50dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:scaleType="fitCenter"
                 android:padding="0dp"
                 app:tint="@color/chess_subtext_color"
@@ -316,7 +323,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/chess_subtext_color"
                 android:text="Forward"
-                android:textSize="16dp"
+                android:textSize="14dp"
                 android:textFontWeight="600"
                 android:fontFamily="@font/inter"/>
         </LinearLayout>

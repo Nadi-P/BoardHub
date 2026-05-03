@@ -56,11 +56,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="8dp"
-                        android:background="@drawable/chess_green_button_background">
+                        android:background="@drawable/chess_black_background">
 
-                        <FrameLayout
+                        <ImageView
+                            android:id="@+id/ivBlackAvatar"
                             android:layout_width="80dp"
                             android:layout_height="80dp"
+                            android:scaleType="centerCrop"
                             android:background="@drawable/chess_black_background"/>
                     </FrameLayout>
                 </LinearLayout>
@@ -86,11 +88,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:padding="8dp"
-                        android:background="@drawable/chess_green_button_background">
+                        android:background="@drawable/chess_white_background">
 
-                        <FrameLayout
+                        <ImageView
+                            android:id="@+id/ivWhiteAvatar"
                             android:layout_width="80dp"
                             android:layout_height="80dp"
+                            android:scaleType="centerCrop"
                             android:background="@drawable/chess_white_background"/>
                     </FrameLayout>
                 </LinearLayout>

@@ -1,9 +1,14 @@
 package com.boardhub.chess.dataClasses;
 
+import android.app.Activity;
 import android.content.Context;
+import android.net.Uri;
+import android.util.Log;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.boardhub.R;
 import com.boardhub.chess.layouts.ChessActivity;
 import com.boardhub.chess.layouts.ChessGameFragment;
 import com.boardhub.chess.layouts.ChessStartGameMenu;
@@ -16,6 +21,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +41,7 @@ public abstract class ChessDBI {
             db.collection("chessGames");
     private static final CollectionReference queueCollection =
             db.collection("match_queue");
+    private static final FirebaseStorage storage = FirebaseStorage.getInstance();
 
     public static ListenerRegistration ListenToGame(String gameUID, EventListener<DocumentSnapshot> listener) {
         return gamesCollection.document(gameUID).addSnapshotListener(listener);
@@ -41,8 +49,10 @@ public abstract class ChessDBI {
     // -- login and sign up ---
 
     public static void AttemptLogin(String email, String password, Context context) {
+        Log.i("ChessDBI", "AttemptLogin called for email=" + email);
         FirebaseAuth.getInstance().signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
+                    Log.i("ChessDBI", "Login auth complete, success=" + task.isSuccessful());
                     if (task.isSuccessful()) {
                         String uid = task.getResult().getUser().getUid();
 
@@ -52,22 +62,34 @@ public abstract class ChessDBI {
                                 .get()
                                 .addOnSuccessListener(documentSnapshot -> {
                                     if (documentSnapshot.exists()) {
-                                        // Map the document back to your User class
                                         User loggedInUser = documentSnapshot.toObject(User.class);
+                                        if (loggedInUser != null) loggedInUser.setUid(uid);
                                         ChessDBI.currentUser = loggedInUser;
                                         ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
+                                    } else {
+                                        Log.w("ChessDBI", "Login: user doc does not exist for uid=" + uid);
+                                        Toast.makeText(context, "Login Failed: user record not found", Toast.LENGTH_LONG).show();
                                     }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("ChessDBI", "Login: firestore fetch failed", e);
+                                    Toast.makeText(context, "Login Failed (Firestore): " + e.getMessage(), Toast.LENGTH_LONG).show();
                                 });
                     } else {
-                        Toast.makeText(context, "Login Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Exception ex = task.getException();
+                        Log.e("ChessDBI", "Login: auth failed", ex);
+                        Toast.makeText(context, "Login Failed: " + (ex != null ? ex.getMessage() : "unknown"), Toast.LENGTH_LONG).show();
                     }
                 });
     }
     public static void AttemptSignup(String email, String password, String username, Context context) {
+        Log.i("ChessDBI", "AttemptSignup called for email=" + email);
         FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
+                    Log.i("ChessDBI", "Signup auth complete, success=" + task.isSuccessful());
                     if (task.isSuccessful()) {
                         String uid = task.getResult().getUser().getUid();
+                        Log.i("ChessDBI", "Signup auth ok uid=" + uid + ", writing firestore doc...");
 
                         User newUser = new User(uid, username, password);
 
@@ -76,11 +98,18 @@ public abstract class ChessDBI {
                                 .document(uid)
                                 .set(newUser)
                                 .addOnSuccessListener(aVoid -> {
+                                    Log.i("ChessDBI", "Signup firestore write ok, replacing screen");
                                     ChessDBI.currentUser = newUser;
                                     ChessUI.ReplaceChessScreen(ChessStartGameMenu.newInstance(false));
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("ChessDBI", "Signup: firestore write failed", e);
+                                    Toast.makeText(context, "Signup Failed (Firestore): " + e.getMessage(), Toast.LENGTH_LONG).show();
                                 });
                     } else {
-                        Toast.makeText(context, "Signup Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Exception ex = task.getException();
+                        Log.e("ChessDBI", "Signup: auth failed", ex);
+                        Toast.makeText(context, "Signup Failed: " + (ex != null ? ex.getMessage() : "unknown"), Toast.LENGTH_LONG).show();
                     }
                 });
     }
@@ -117,8 +146,7 @@ public abstract class ChessDBI {
     public interface OnMatchFoundListener {
         void onMatchFound(String gameUID, boolean isWhite, String userUID, String opponentUID);
     }
-    public static void AddPlayerToGameQueue(int
-                                                    gameModeIndex, String preferredSide, OnMatchFoundListener listener) {
+    public static void AddPlayerToGameQueue(int gameModeIndex, String preferredSide, OnMatchFoundListener listener) {
         String myUID = FirebaseAuth.getInstance().getUid();
         queueCollection
                 .whereEqualTo("gameModeIndex", gameModeIndex)
@@ -214,6 +242,28 @@ public abstract class ChessDBI {
         if (mySide.equals("BLACK") && opponentSide.equals("WHITE")) return true;
         return false;
     }
+    public static void RecordGameResult(String resultField) {
+        // resultField is one of "chessWins", "chessLosses", "chessDraws".
+        Log.i("ChessDBI", "RecordGameResult called field=" + resultField + " currentUser=" + (currentUser != null ? currentUser.getUid() : "null"));
+        if (currentUser == null) {
+            Log.w("ChessDBI", "RecordGameResult: currentUser is null, skipping");
+            return;
+        }
+        String uid = currentUser.getUid();
+        if (uid == null) {
+            Log.w("ChessDBI", "RecordGameResult: uid is null, skipping");
+            return;
+        }
+
+        if ("chessWins".equals(resultField)) currentUser.AddChessWin();
+        else if ("chessLosses".equals(resultField)) currentUser.AddChessLoss();
+        else if ("chessDraws".equals(resultField)) currentUser.AddChessDraw();
+
+        usersCollection.document(uid).update(resultField, FieldValue.increment(1))
+                .addOnSuccessListener(v -> Log.i("ChessDBI", "RecordGameResult: firestore updated " + resultField + " for " + uid))
+                .addOnFailureListener(e -> Log.e("ChessDBI", "RecordGameResult: firestore update FAILED for " + uid, e));
+    }
+
     public static void RemovePlayerFromGameQueue() {
         String myUID = FirebaseAuth.getInstance().getUid();
         if (myUID != null) {
@@ -221,17 +271,92 @@ public abstract class ChessDBI {
         }
     }
 
-    public static void GetUserWithUID(String uid, UserCallback callback) {
+    // Define this interface in your class
+    public static void getUserFromUID(String uid, UserCallback callback) {
         usersCollection.document(uid).get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
-                User user = documentSnapshot.toObject(User.class);
-                callback.onCallback(user); // Send the user back via interface
+                // 1. Extract Firestore data
+                String username = documentSnapshot.getString("username");
+                String password = documentSnapshot.getString("password");
+                int wins = documentSnapshot.getLong("chessWins") != null ?
+                        documentSnapshot.getLong("chessWins").intValue() : 0;
+                int losses = documentSnapshot.getLong("chessLosses") != null ?
+                        documentSnapshot.getLong("chessLosses").intValue() : 0;
+                int draws = documentSnapshot.getLong("chessDraws") != null ?
+                        documentSnapshot.getLong("chessDraws").intValue() : 0;
+
+                // 2. Now fetch the Image Uri from Storage
+                getImageWithUID(uid, new ImageCallback() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        System.out.println("Success");
+                        // Success: Image found, pass URI to constructor
+                        User user = new User(uid, uri.toString(), username, password, wins, losses, draws);
+                        callback.onCallback(user);
+                    }
+
+                    @Override
+                    public void onFailure(String error) {
+                        System.out.println("Error" + error);
+                        // Failure: No image found, pass null for URI (falls back to pawn icon)
+                        User user = new User(uid, null, username, password, wins, losses, draws);
+                        callback.onCallback(user);
+                    }
+                });
+
+            } else {
+                callback.onCallback(null);
             }
-        });
+        }).addOnFailureListener(e -> callback.onCallback(null));
     }
 
-    // Define this interface in your class
+    // Define the interface for the callback
     public interface UserCallback {
         void onCallback(User user);
+    }
+    public static void UpdateUser(User user) {
+
+        usersCollection.document(user.getUid()).set(user);
+    }
+    public static void getImageWithUID(String uid, ImageCallback callback) {
+        StorageReference storageRef = storage.getReference()
+                .child("profile_pics/" + uid + ".jpg");
+
+        storageRef.getDownloadUrl().addOnSuccessListener(uri -> {
+            callback.onSuccess(uri);
+        }).addOnFailureListener(e -> {
+            callback.onFailure(e.getMessage());
+        });
+    }
+    public interface ImageCallback {
+        void onSuccess(Uri uri);
+        void onFailure(String error);
+    }
+    public static void LoadImageToView(Activity activity, ImageView imageView, String urlString){
+        if (urlString == null || urlString.isEmpty()) {
+            imageView.setImageResource(R.drawable.chess_piece_white_pawn);
+            return;
+        }
+
+        new Thread(() -> {
+            try {
+                // 1. Convert String to URL object
+                java.net.URL url = new java.net.URL(urlString);
+
+                // 2. Open connection and decode the stream into a Bitmap
+                android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(url.openConnection().getInputStream());
+
+                // 3. Switch back to UI thread (with safety check)
+                if (activity != null) {
+                    activity.runOnUiThread(() -> imageView.setImageBitmap(bitmap));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                // Handle error by showing the pawn icon
+                if (activity != null) {
+                    activity.runOnUiThread(() -> imageView.setImageResource(R.drawable.chess_piece_white_pawn));
+                }
+            }
+        }).start();
     }
 }

@@ -15,16 +15,21 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.boardhub.R;
 import com.boardhub.chess.dataClasses.ChessDBI;
 import com.boardhub.chess.dataClasses.ChessGame;
 import com.boardhub.chess.dataClasses.ChessLogic;
 import com.boardhub.chess.dataClasses.ChessUI;
+import com.boardhub.chess.dataClasses.User;
+import com.google.firebase.auth.FirebaseAuth;
 
 public class ChessStartGameMenu extends Fragment {
     public static final String IS_SINGLEPLAYER = "isSinglePlayer";
     private boolean isSingleplayer;
+
+    private User user;
 
     private final android.os.Handler timerHandler = new android.os.Handler();
     private Runnable timerRunnable;
@@ -65,13 +70,13 @@ public class ChessStartGameMenu extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.chess_start_game_menu_fragment, container, false);
-
-        InitializeViews(root);
-        setupListeners(root);
-
+        GetUser(root);
         return root;
     }
-
+    private void Main(View root){
+        InitializeViews(root);
+        setupListeners(root);
+    }
     private void InitializeViews(View root) {
         // Initialize Views
         btnSelectMode = root.findViewById(R.id.btn_select_mode); // Add this ID to your XML
@@ -85,6 +90,8 @@ public class ChessStartGameMenu extends Fragment {
 
         btnSelectMode.setText(modes[currentModeIndex]);
         tvQueueing.setVisibility(View.INVISIBLE);
+
+        isStartGameBtnClicked = !btnStartGame.getText().equals("Start Game");
 
         timerRunnable = new Runnable() {
             @Override
@@ -101,7 +108,6 @@ public class ChessStartGameMenu extends Fragment {
             }
         };
     }
-
     private void setupListeners(View root) {
         btnStartGame.setOnClickListener(v -> {
             ChessUI.AnimateButtonClickShrink(v, getContext());
@@ -136,12 +142,11 @@ public class ChessStartGameMenu extends Fragment {
         });
 
         btnProfile.setOnClickListener(v -> {
-
+            ChessUI.ReplaceChessScreen(ChessProfileFragment.newInstance(user));
         });
 
         setupColorSelectors();
     }
-
     private void setupColorSelectors() {
         View.OnClickListener colorListener = v -> {
             ChessUI.AnimateButtonClickShrink(v, getContext());
@@ -166,7 +171,6 @@ public class ChessStartGameMenu extends Fragment {
         // Set default selection
         frameRandom.performClick();
     }
-
     private void startQueueing(){
         btnStartGame.setBackgroundResource(R.drawable.chess_orange_button_background);
         btnStartGame.setText("Cancel");
@@ -181,7 +185,6 @@ public class ChessStartGameMenu extends Fragment {
             ChessUI.ReplaceChessScreen(ChessGameFragment.newInstance(game, false));
         });
     }
-
     private void endQueueing(){
         btnStartGame.setBackgroundResource(R.drawable.chess_green_button_background);
         btnStartGame.setText("Start Game");
@@ -192,5 +195,19 @@ public class ChessStartGameMenu extends Fragment {
         intervalsMade = 0;
 
         ChessDBI.RemovePlayerFromGameQueue();
+    }
+    private void GetUser(View root) {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        ChessDBI.getUserFromUID(uid, new ChessDBI.UserCallback() {
+            @Override
+            public void onCallback(User user) {
+                if (user != null) {
+                    ChessStartGameMenu.this.user = user;
+                    Main(root);
+                } else {
+                    Toast.makeText(getContext(), "Failed to fetch user data", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 }

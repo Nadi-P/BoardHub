@@ -1,5 +1,7 @@
 package com.boardhub.chess.dataClasses;
 
+import android.graphics.Bitmap;
+
 import com.boardhub.R;
 import com.boardhub.chess.pieces.Bishop;
 import com.boardhub.chess.pieces.ChessPiece;
@@ -264,6 +266,16 @@ public interface ChessLogic {
                     break;
             }
         }
+    }
+    public static Bitmap cropToSquare(Bitmap bitmap) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        int newEdge = Math.min(width, height); // Get the shorter side
+
+        int xOffset = (width - newEdge) / 2;   // Calculate center start point
+        int yOffset = (height - newEdge) / 2;
+
+        return Bitmap.createBitmap(bitmap, xOffset, yOffset, newEdge, newEdge);
     }
 
 

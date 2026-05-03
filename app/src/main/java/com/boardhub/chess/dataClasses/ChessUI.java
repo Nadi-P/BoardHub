@@ -82,16 +82,22 @@ public abstract class ChessUI {
 
     public static View CreateSChessGameOverPopup(
             LayoutInflater inflater, ViewGroup container,
-            boolean isWin, int gameOverReasonIndex, int movesCount, boolean isWhiteWin){
+            boolean isWin, int gameOverReasonIndex, int movesCount, boolean isWhiteWin,
+            android.app.Activity activity, String whiteAvatarUrl, String blackAvatarUrl){
         View popupWindow = inflater.inflate(R.layout.chess_gameover_popup, container, false);
 
         ImageView whiteCrown = popupWindow.findViewById(R.id.ivWhiteCrown);
         ImageView blackCrown = popupWindow.findViewById(R.id.ivBlackCrown);
+        ImageView whiteAvatar = popupWindow.findViewById(R.id.ivWhiteAvatar);
+        ImageView blackAvatar = popupWindow.findViewById(R.id.ivBlackAvatar);
         TextView tvWinStatus = popupWindow.findViewById(R.id.tvWinStatus);
         TextView tvWinReason = popupWindow.findViewById(R.id.tvWinReason);
         TextView tvMoveCount = popupWindow.findViewById(R.id.tvMoveCount);
         Button btnReviewGame = popupWindow.findViewById(R.id.btnReviewGame);
         Button btnMainMenu = popupWindow.findViewById(R.id.btnReturnToMenu);
+
+        ChessDBI.LoadImageToView(activity, whiteAvatar, whiteAvatarUrl);
+        ChessDBI.LoadImageToView(activity, blackAvatar, blackAvatarUrl);
 
         if (isWin) {
             if (isWhiteWin) {

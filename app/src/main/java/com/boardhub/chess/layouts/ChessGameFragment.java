@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,19 +20,24 @@ import android.widget.LinearLayout;
 import android.widget.Space;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 import com.boardhub.R;
 import com.boardhub.chess.dataClasses.*;
 import com.boardhub.chess.pieces.ChessPiece;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.firestore.ListenerRegistration;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class ChessGameFragment extends Fragment {
     private ListenerRegistration gameListener;
+    private DatabaseReference statusRef;
 
     // timers
     private final android.os.Handler timerHandler = new android.os.Handler();
@@ -61,7 +67,9 @@ public class ChessGameFragment extends Fragment {
     private ImageView
             btnOptionsIcon,
             btnBackIcon,
-            btnForwardIcon;
+            btnForwardIcon,
+            opponentAvatar,
+            playerAvatar;
     private LinearLayout
             optionsSection,
             backSection,
@@ -111,7 +119,9 @@ public class ChessGameFragment extends Fragment {
         InitializeBoard();
         UpdateBoardUI();
 
-        if (!isSingleplayer) InitializeGameListener();
+        if (!isSingleplayer) {
+            InitializeGameListener();
+        }
 
         StartTimers();
         DisableBackButton();
@@ -127,10 +137,12 @@ public class ChessGameFragment extends Fragment {
         promotionsMenu = rootView.findViewById(R.id.promotionsMenu_grid);
 
         playerTimeTextView = rootView.findViewById(R.id.playerTimeView);
+        playerAvatar = rootView.findViewById(R.id.playerAvatar);
         playerName = rootView.findViewById(R.id.tvPlayerName);
         playerCapturedPiecesTextView = rootView.findViewById(R.id.playerCapturedPiecesTextView);
 
         opponentName = rootView.findViewById(R.id.tvOpponentName);
+        opponentAvatar = rootView.findViewById(R.id.opponentAvatar);
         opponentTimeTextView = rootView.findViewById(R.id.opponentTimeView);
         opponentCapturedPiecesTextView = rootView.findViewById(R.id.opponentCapturedPiecesTextView);
 
@@ -163,14 +175,15 @@ public class ChessGameFragment extends Fragment {
             opponentName.setText("Black Player");
         }
         else {
-            ChessDBI.GetUserWithUID(game.GetPlayerUID(true), player -> {
-                this.player = player; // Store the result
+            // 1. Fetch the White player (true)
+            ChessDBI.getUserFromUID(game.GetPlayerUID(true), player -> {
+                this.player = player; // Result of getUserFromUID includes the URI now
 
-                // Once White is fetched, fetch the Black player
-                ChessDBI.GetUserWithUID(game.GetPlayerUID(false), opponent -> {
-                    this.opponent = opponent; // Store the result
+                // 2. Once White is ready, fetch the Black player (false)
+                ChessDBI.getUserFromUID(game.GetPlayerUID(false), opponent -> {
+                    this.opponent = opponent;
 
-                    // NOW both are ready, update the UI labels
+                    // 3. NOW both User objects (with their URIs) are ready
                     UpdateScoreboardNames();
                 });
             });
@@ -261,15 +274,15 @@ public class ChessGameFragment extends Fragment {
                 UpdateDisplayAfterMove();
 
                 isViewingPreviousMove = false;
-                movePreviousIndex = game.GetMovesRecord().size()-1;
+                movePreviousIndex = game.GetMovesRecord().size() - 1;
                 DisableForwardButton();
-                if (moveInitialX != -1){
+                if (moveInitialX != -1) {
                     EnableBackButton();
                 }
 
-                if (receivedMove.isCheckmate) HandleCheckmate();
-                else if (receivedMove.isStalemate) HandleStalemate();
-                else if (receivedMove.isDraw) HandleDraw();
+                if (receivedMove.isCheckmate) HandleCheckmate(receivedMove.isWhiteTurn);
+                else if (receivedMove.isStalemate) HandleStalemate(receivedMove.isWhiteTurn);
+                else if (receivedMove.isDraw) HandleDraw(receivedMove.isWhiteTurn);
             }
         });
     }
@@ -284,24 +297,31 @@ public class ChessGameFragment extends Fragment {
         });
         optionsSection.setOnClickListener(v -> {
             ChessUI.AnimateButtonClickShrink(v, getContext());
-
-            String[] colors = {"Draw", "Resign"};
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.BigDarkDialog);
-            builder.setItems(colors, (dialog, which) -> {
-                // 'which' is the index of the clicked item
-                String selectedOption = colors[which];
-                HandleOptionsDialog(selectedOption);
-            });
-            builder.show();
+            ShowOptionsDialog();
         });
         btnReturn.setOnClickListener(v -> {
             ChessUI.ReturnToPreviousScreen();
         });
+
+        requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(), new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                ShowOptionsDialog();
+            }
+        });
     }
 
     // --- Operations ---
-
+    private void ShowOptionsDialog(){
+        String[] colors = {"Draw", "Resign"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.BigDarkDialog);
+        builder.setItems(colors, (dialog, which) -> {
+            // 'which' is the index of the clicked item
+            String selectedOption = colors[which];
+            HandleOptionsDialog(selectedOption);
+        });
+        builder.show();
+    }
     private void SelectPiece(ChessPiece piece) {
         ArrayList<ChessMove> moves = piece.GetMoves();
         if (moves == null || moves.isEmpty()) return;
@@ -547,9 +567,10 @@ public class ChessGameFragment extends Fragment {
     }
     private void UpdateScoreboardNames() {
         if (player != null && opponent != null) {
-            // Assuming whitePlayerLabel and blackPlayerLabel are your TextViews
             playerName.setText(player.getUsername());
             opponentName.setText(opponent.getUsername());
+            ChessDBI.LoadImageToView(getActivity(), playerAvatar, player.getImageURL());
+            ChessDBI.LoadImageToView(getActivity(), opponentAvatar, opponent.getImageURL());
         }
     }
 
@@ -557,22 +578,22 @@ public class ChessGameFragment extends Fragment {
 
     private boolean HandleIrregularMove(ChessMove move) {
         if (move.isResignation) {
-            HandleResignation();
+            HandleResignation(move.isWhiteTurn);
             return true;
         } else if (move.isOutOfTime) {
-            HandleOutOfTime();
+            HandleOutOfTime(move.isWhiteTurn);
             return true;
         } else if (move.isDrawOffer) {
             HandleDrawOffer(move);
             return true;
         } else if (move.isDrawAccept) {
-            HandleAgreedDraw();
+            HandleAgreedDraw(move.isWhiteTurn);
             return true;
         } else if (move.isDrawDecline) {
             HandleDrawOfferDecline(move);
             return true;
         } else if (move.isRepetition) {
-            HandleRepetition();
+            HandleRepetition(move.isWhiteTurn);
             return true;
         }
         return false;
@@ -599,35 +620,47 @@ public class ChessGameFragment extends Fragment {
         }
         drawOfferPopup.setVisibility(View.GONE);
     }
-    private void HandleDraw() {
-        HandleEndGame(false, 0, true);
+    private void HandleDraw(boolean isMoveByWhite) {
+        HandleEndGame(isMoveByWhite, false, 0);
     }
-    private void HandleAgreedDraw() {
-        HandleEndGame(false, 1, true);
+    private void HandleAgreedDraw(boolean isMoveByWhite) {
+        HandleEndGame(isMoveByWhite, false, 1);
         drawOfferPopup.setVisibility(View.GONE);
 
     }
-    private void HandleRepetition() {
-        HandleEndGame(false, 2, true);
+    private void HandleRepetition(boolean isMoveByWhite) {
+        HandleEndGame(isMoveByWhite, false, 2);
     }
-    private void HandleStalemate() {
-        HandleEndGame(false, 3, true);
+    private void HandleStalemate(boolean isMoveByWhite) {
+        HandleEndGame(isMoveByWhite, false, 3);
     }
-    private void HandleCheckmate() {
-        HandleEndGame(true, 0, true);
+    private void HandleCheckmate(boolean isMoveByWhite) {
+        // The mover delivered checkmate, so they win — pass the loser to keep HandleEndGame's !isMoveByWhite logic correct.
+        HandleEndGame(!isMoveByWhite, true, 0);
     }
-    private void HandleResignation() {
-        HandleEndGame(true, 2, true);
+    private void HandleResignation(boolean isMoveByWhite) {
+        HandleEndGame(isMoveByWhite, true, 2);
     }
-    private void HandleOutOfTime() {
-        HandleEndGame(true, 1, true);
+    private void HandleOutOfTime(boolean isMoveByWhite) {
+        HandleEndGame(isMoveByWhite, true, 1);
     }
-    private void HandleEndGame(boolean isWIn, int gameOverReasonIndex, boolean isWhiteMoveDependant) {
+    private void HandleEndGame(boolean isMoveByWhite, boolean isWIn, int gameOverReasonIndex) {
         StopTimers();
+        if (!isGameOver) {
+            if (isWIn) {
+                boolean localPlayerWon = (isWhite != isMoveByWhite);
+                ChessDBI.RecordGameResult(localPlayerWon ? "chessWins" : "chessLosses");
+            } else {
+                ChessDBI.RecordGameResult("chessDraws");
+            }
+        }
         isGameOver = true;
         gameListener = null;
         activeMoves.clear();
         DisableOptionsButton();
+
+        String whiteAvatarUrl = isWhite ? player.getImageURL() : opponent.getImageURL();
+        String blackAvatarUrl = isWhite ? opponent.getImageURL() : player.getImageURL();
 
         View popup = ChessUI.CreateSChessGameOverPopup(
                 inflater,
@@ -635,7 +668,10 @@ public class ChessGameFragment extends Fragment {
                 isWIn,
                 gameOverReasonIndex,
                 game.GetMovesRecord().size(),
-                (isWhiteMoveDependant) ? game.IsWhiteTurn() : isWhite
+                !isMoveByWhite,
+                getActivity(),
+                whiteAvatarUrl,
+                blackAvatarUrl
         );
 
         Button btnReviewGame = popup.findViewById(R.id.btnReviewGame);

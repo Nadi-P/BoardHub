@@ -26,6 +26,8 @@
     <color name="chess_dark_green">#5E904B</color>
     <color name="chess_light_green">#90B661</color>
     <color name="chess_edittext_background">#803F3E3C</color>
+    <color name="chess_red">#FF2E2E</color>
+    <color name="chess_green">#30D036</color>
 
 
 </resources>
