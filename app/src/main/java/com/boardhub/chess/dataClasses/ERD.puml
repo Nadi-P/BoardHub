@@ -1,0 +1,174 @@
+@startuml BoardHub_ERD
+
+title BoardHub — Entity Relationship Diagram
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor #FAFAFA
+skinparam defaultFontName Arial
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor<<Firestore>> #E3F2FD
+    BorderColor<<Firestore>> #1565C0
+    BackgroundColor<<Storage>> #FFF3E0
+    BorderColor<<Storage>> #E65100
+    BackgroundColor<<Auth>> #E8F5E9
+    BorderColor<<Auth>> #2E7D32
+    HeaderBackgroundColor<<Firestore>> #1565C0
+    HeaderBackgroundColor<<Storage>> #E65100
+    HeaderBackgroundColor<<Auth>> #2E7D32
+    FontColor<<Firestore>> #0D47A1
+    FontColor<<Storage>> #BF360C
+    FontColor<<Auth>> #1B5E20
+}
+
+' ============================================================
+' ENTITIES
+' ============================================================
+
+entity "User" as User <<Firestore>> {
+    Collection: users
+    ==
+    + UID : String  <<PK>>
+    --
+    username : String
+    password : String  <<security risk>>
+    imageURL : String  <<nullable>>
+    --
+    chessWins : long
+    chessLosses : long
+    chessDraws : long
+}
+
+entity "ChessGame" as Game <<Firestore>> {
+    Collection: chessGames
+    ==
+    + gameUID : String  <<PK>>
+    --
+    whitePlayer : String  <<FK -> User.UID>>
+    blackPlayer : String  <<FK -> User.UID>>
+    --
+    boardFEN : String (64 chars)
+    isWhiteTurn : boolean
+    --
+    whiteTime : long  (ms)
+    blackTime : long  (ms)
+    --
+    xInitial : long
+    yInitial : long
+    xTarget : long
+    yTarget : long
+    promotionPieceIndex : long
+    --
+    isCheckingOpponent : boolean
+    isCheckmate : boolean
+    isStalemate : boolean
+    isDraw : boolean
+    isResignation : boolean
+    isOutOfTime : boolean
+    isLeftCastling : boolean
+    isRightCastling : boolean
+    isEnPassant : boolean
+    isPromotion : boolean
+    isDrawOffer : boolean
+    isDrawAccept : boolean
+    isDrawDecline : boolean
+    isRepetition : boolean
+    isBoardInitialization : boolean
+}
+
+entity "MatchRequest" as Match <<Firestore>> {
+    Collection: match_queue
+    ==
+    + UID : String  <<PK = User.UID>>
+    --
+    gameModeIndex : long
+    side : String  (WHITE / BLACK / RANDOM)
+    status : String  (WAITING / MATCHED)
+    timestamp : Timestamp  <<server time>>
+    --
+    gameUID : String  <<FK, nullable>>
+    creatorIsWhite : boolean  <<nullable>>
+    opponentUID : String  <<FK -> User.UID, nullable>>
+}
+
+entity "ProfilePicture" as Pic <<Storage>> {
+    Path: profile_pics/{UID}.jpg
+    ==
+    + path : String  <<PK>>
+    --
+    contentType : image/jpeg
+    quality : 90%
+    cropped : square
+}
+
+entity "AuthUser" as Auth <<Auth>> {
+    Firebase Authentication
+    ==
+    + UID : String  <<PK>>
+    --
+    email : String
+    password : String  <<hashed>>
+}
+
+' ============================================================
+' RELATIONSHIPS
+' ============================================================
+
+Auth ||--|| User : "1 ↔ 1\nbacks"
+User ||--o| Pic : "1 ↔ 0..1\nowns"
+
+User ||--o{ Game : "1 ↔ 0..*\nplays as white"
+User ||--o{ Game : "1 ↔ 0..*\nplays as black"
+
+User ||--o| Match : "1 ↔ 0..1\ncreates"
+Match |o--o| Game : "0..1 ↔ 0..1\nresults in"
+Match }o--o| User : "0..* ↔ 0..1\nmatched with"
+
+' ============================================================
+' NOTES
+' ============================================================
+
+note right of User
+  <b>Security note:</b>
+  The <i>password</i> field should NOT
+  be stored in Firestore.
+  Firebase Authentication already
+  handles password hashing.
+  Future improvement: remove the field.
+end note
+
+note bottom of Match
+  <b>Required composite index:</b>
+  gameModeIndex (Asc) + timestamp (Asc)
+  Used by the matchmaking query.
+
+  <b>Lifecycle:</b>
+  Document is deleted as soon as
+  the match is established and
+  both clients receive the update.
+end note
+
+note right of Game
+  <b>Move history is NOT stored.</b>
+  Only the latest move overwrites
+  the document on each turn.
+  History exists only in client RAM.
+end note
+
+note left of Pic
+  <b>Storage, not Firestore.</b>
+  The link to User is implicit
+  through the UID in the file path.
+end note
+
+note as N1
+  <b>Foreign Keys are logical only.</b>
+  Firestore is a Document Store —
+  there is no automatic FK enforcement.
+  All relationships are maintained
+  by application code (ChessDBI).
+end note
+
+@enduml

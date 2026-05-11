@@ -1,0 +1,154 @@
+@startuml BoardHub
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+hide empty members
+
+' =================== USER ===================
+class User {
+  - UID : String
+  - imageURL : String
+  - username : String
+  - password : String
+  - chessWins : long
+  - chessLosses : long
+  - chessDraws : long
+  + getUid() : String
+  + getUsername() : String
+  + getImageURL() : String
+  + getChessWins() : long
+  + getChessLosses() : long
+  + getChessDraws() : long
+  + AddChessWin()
+  + AddChessLoss()
+  + AddChessDraw()
+  + setUid(uid : String)
+  + setImageURL(url : String)
+}
+
+' =================== GAME ===================
+class ChessGame {
+  - UID : String
+  - initialFen : String
+  - assignedIsWhite : boolean
+  - playerUID : String
+  - opponentUID : String
+  - board : ChessPiece[8][8]
+  - isWhiteTurn : boolean
+  - movesRecord : ArrayList<ChessMove>
+  - whiteTime : long
+  - blackTime : long
+  - whitePieces : ArrayList<ChessPiece>
+  - blackPieces : ArrayList<ChessPiece>
+  - whiteKing : King
+  - blackKing : King
+  + GetUID() : String
+  + GetBoard() : ChessPiece[][]
+  + GetBoardFEN() : String
+  + IsWhiteTurn() : boolean
+  + GetTime(isWhite : boolean) : long
+  + GetPieces(isWhite : boolean) : ArrayList<ChessPiece>
+  + GetMovesRecord() : ArrayList<ChessMove>
+  + ApplyMove(move : ChessMove)
+}
+
+' =================== MOVE ===================
+class ChessMove {
+  + game : ChessGame
+  + movedPiece : ChessPiece
+  + capturedPiece : ChessPiece
+  + initialX : int
+  + initialY : int
+  + targetX : int
+  + targetY : int
+  + promotionPieceIndex : int
+  + whiteTime : long
+  + blackTime : long
+  + isWhiteTurn : boolean
+  + isRightCastling : boolean
+  + isLeftCastling : boolean
+  + isEnPassant : boolean
+  + isPromotion : boolean
+  + isCheckingOpponent : boolean
+  + isCheckmate : boolean
+  + isStalemate : boolean
+  + isDraw : boolean
+  + isResignation : boolean
+  + isOutOfTime : boolean
+  + isDrawOffer : boolean
+  + isDrawAccept : boolean
+  + isDrawDecline : boolean
+  + isRepetition : boolean
+  + boardFen : String
+  + FormatToPacket() : Map<String,Object>
+}
+
+' =================== PIECES ===================
+abstract class ChessPiece {
+  # FENid : String
+  # game : ChessGame
+  # isWhite : boolean
+  # xPos : int
+  # yPos : int
+  # value : int
+  # imageResource : int
+  + GetIsWhite() : boolean
+  + GetXPos() : int
+  + GetYPos() : int
+  + GetValue() : int
+  + GetImageResource() : int
+  + GetGame() : ChessGame
+  + GetFENid() : String
+  + SetPosition(x : int, y : int)
+  + RemoveFromGame()
+  + isDifferentColor(piece : ChessPiece) : boolean
+  + MoveTo(x : int, y : int, isVirtual : boolean)
+  + GetMoves() : ArrayList<ChessMove>
+}
+
+class King   extends ChessPiece
+class Queen  extends ChessPiece
+class Rook   extends ChessPiece
+class Bishop extends ChessPiece
+class Knight extends ChessPiece
+class Pawn   extends ChessPiece
+
+' =================== STATIC HELPERS ===================
+class ChessLogic <<utility>> {
+  + {static} DuplicateBoard(board) : ChessPiece[][]
+  + {static} IsKingThreatened(...) : boolean
+  + {static} IsPositionInBoard(x : int, y : int) : boolean
+  + {static} cropToSquare(bitmap) : Bitmap
+}
+
+class ChessDBI <<utility>> {
+  + {static} currentUser : User
+  + {static} AttemptLogin(email, password, ctx)
+  + {static} AttemptSignup(email, password, username, ctx)
+  + {static} RecordGameResult(field : String)
+  + {static} SaveGame(game : ChessGame)
+  + {static} SaveMove(move : ChessMove)
+  + {static} ListenToGame(uid, listener)
+  + {static} AddPlayerToGameQueue(...)
+  + {static} getUserFromUID(uid, callback)
+  + {static} UpdateUser(user : User)
+}
+
+' =================== RELATIONSHIPS ===================
+ChessGame "1" *-- "0..*" ChessPiece : board / pieces
+ChessGame "1" *-- "0..*" ChessMove  : movesRecord
+ChessGame "1" o-- "1" King          : whiteKing
+ChessGame "1" o-- "1" King          : blackKing
+
+ChessMove   --> ChessGame  : game
+ChessMove   --> ChessPiece : movedPiece / capturedPiece
+
+ChessPiece  --> ChessGame  : game
+
+ChessDBI    ..> User
+ChessDBI    ..> ChessGame
+ChessDBI    ..> ChessMove
+ChessLogic  ..> ChessGame
+ChessLogic  ..> ChessPiece
+
+@enduml

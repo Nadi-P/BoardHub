@@ -653,9 +653,15 @@ public class ChessGameFragment extends Fragment {
             } else {
                 ChessDBI.RecordGameResult("chessDraws");
             }
+            if (!isSingleplayer && game != null) {
+                ChessDBI.DeleteGame(game.GetUID());
+            }
         }
         isGameOver = true;
-        gameListener = null;
+        if (gameListener != null) {
+            gameListener.remove();
+            gameListener = null;
+        }
         activeMoves.clear();
         DisableOptionsButton();
 

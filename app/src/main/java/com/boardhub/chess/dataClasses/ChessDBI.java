@@ -141,6 +141,13 @@ public abstract class ChessDBI {
         gamesCollection.document(move.game.GetUID()).set(packet);
     }
 
+    public static void DeleteGame(String gameUID) {
+        if (gameUID == null) return;
+        gamesCollection.document(gameUID).delete()
+                .addOnSuccessListener(v -> Log.i("ChessDBI", "DeleteGame: deleted " + gameUID))
+                .addOnFailureListener(e -> Log.e("ChessDBI", "DeleteGame: failed for " + gameUID, e));
+    }
+
     // --- Handle Queueing ---
 
     public interface OnMatchFoundListener {

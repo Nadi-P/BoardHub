@@ -161,7 +161,7 @@ public class ChessProfileFragment extends Fragment {
 
                         user.setImageURL(downloadUrl);
                         FirebaseFirestore.getInstance().collection("users").document(uid)
-                                .update("photoUrl", downloadUrl);
+                                .update("imageURL", downloadUrl);
 
                         if (isAdded() && imgProfile != null) {
                             imgProfile.setImageBitmap(squareBitmap);
