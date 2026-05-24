@@ -370,6 +370,7 @@ public class ChessGameFragment extends Fragment {
         if (selection == "Draw") {
             // Handle draw
             ChessMove drawMove = new ChessMove(game, 5);
+            drawMove.isWhiteTurn = isWhite;
             ExecuteMove(drawMove);
         } else if (selection == "Resign") {
             ChessMove resignMove = new ChessMove(game, 3);
